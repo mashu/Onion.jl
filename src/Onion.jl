@@ -1,11 +1,13 @@
 module Onion
 
-using Flux
+using Flux, LinearAlgebra
 
 include("shared.jl")
 include("AdaLN.jl")
 include("RMSNorm.jl")
 include("StarGLU.jl")
+include("GQAttention.jl")
+include("RoPE.jl")
 
 export
     #shared:
@@ -13,6 +15,10 @@ export
     #layers:
     AdaLN,
     RMSNorm,
-    StarGLU
+    StarGLU,
+    GQAttention,
+    RoPE,
+    TransformerBlock,
+    Attention
 
 end
