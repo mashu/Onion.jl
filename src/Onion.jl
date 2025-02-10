@@ -10,6 +10,5 @@ export
     glut,
     #layers:
     AdaLN
-end
 
 end
