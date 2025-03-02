@@ -23,11 +23,13 @@ end
         time_emb_dim=256,
         dropout=0.0,
         dropout_depth=0,
-        activation=relu
+        activation=relu,
+        custom_bottleneck=identity
     )
 
 A flexible UNet architecture with configurable depth and channel dimensions.
 Supports optional time and class embeddings for diffusion models and conditional generation.
+Now supports an optional custom_bottleneck that gets applied after the standard bottleneck.
 
 # Arguments
 - `in_channels=3`: Number of input channels
@@ -42,6 +44,7 @@ Supports optional time and class embeddings for diffusion models and conditional
 - `dropout=0.0`: Dropout probability to apply to inner layers
 - `dropout_depth=0`: Number of layers to apply dropout to, starting from the innermost layers (0 means no dropout). Maximum value is 1+depth (bottleneck + all encoding/decoding levels)
 - `activation=relu`: Activation function to use throughout the network
+- `custom_bottleneck=identity`: Optional additional layer(s) to apply after the standard bottleneck
 
 # Examples
 ```julia
@@ -67,15 +70,27 @@ model = FlexibleUNet(
     dropout_depth=3
 )
 
+# Model with custom transformer layers after the bottleneck
+model = FlexibleUNet(
+    in_channels=3,
+    out_channels=3,
+    depth=4,
+    base_channels=32,
+    channel_multipliers=[1, 2, 4, 8],
+    time_embedding=true,
+    custom_bottleneck=my_transformer_stack
+)
+
 x = randn(Float32, 32, 32, 3, 1)
 t = randn(Float32, 1)
 labels = [5]
 y = model(x, t, labels)
 ```
 """
-struct FlexibleUNet{E,B,D,FC,T}
+struct FlexibleUNet{E,B,CB,D,FC,T}
     encoders::E
     bottleneck::B
+    custom_bottleneck::CB  # New field for custom bottleneck
     decoders::D
     final_conv::FC
     time_embed::T
@@ -95,7 +110,8 @@ function FlexibleUNet(;
     time_emb_dim=256,
     dropout=0.0,
     dropout_depth=0,
-    activation=relu
+    activation=relu,
+    custom_bottleneck=identity
 )
     # Ensure we have enough channel multipliers for the requested depth
     if length(channel_multipliers) < depth
@@ -172,7 +188,7 @@ function FlexibleUNet(;
     encoders_tuple = Tuple(encoders)
     decoders_tuple = Tuple(decoders)
 
-    FlexibleUNet(encoders_tuple, bottleneck, decoders_tuple, final_conv, time_embed)
+    FlexibleUNet(encoders_tuple, bottleneck, custom_bottleneck, decoders_tuple, final_conv, time_embed)
 end
 
 # Process encoders and collect skip connections without mutations
@@ -239,6 +255,9 @@ function (model::FlexibleUNet)(x)
     # Apply bottleneck
     x = model.bottleneck(x)
 
+    # Apply custom bottleneck (defaults to identity if not provided)
+    x = model.custom_bottleneck(x)
+
     # Apply decoder blocks with skip connections (reverse skip connections)
     rev_skips = reverse_tuple(skip_connections)
     x = process_decoders(x, model.decoders, rev_skips)
@@ -257,6 +276,13 @@ function (model::FlexibleUNet)(x, t::T) where T <: AbstractArray
     # Apply bottleneck
     x = model.bottleneck(x, t)
 
+    # Apply custom bottleneck with time conditioning if it accepts it
+    if applicable(model.custom_bottleneck, x, t)
+        x = model.custom_bottleneck(x, t)
+    else
+        x = model.custom_bottleneck(x)
+    end
+
     # Apply decoder blocks with skip connections (reverse skip connections)
     rev_skips = reverse_tuple(skip_connections)
     x = process_decoders(x, t, model.decoders, rev_skips)
@@ -274,6 +300,13 @@ function (model::FlexibleUNet)(x, t::T, labels::L) where {T <: AbstractArray, L 
 
     # Apply bottleneck
     x = model.bottleneck(x, t)
+
+    # Apply custom bottleneck with time conditioning if it accepts it
+    if applicable(model.custom_bottleneck, x, t)
+        x = model.custom_bottleneck(x, t)
+    else
+        x = model.custom_bottleneck(x)
+    end
 
     # Apply decoder blocks with skip connections (reverse skip connections)
     rev_skips = reverse_tuple(skip_connections)
