@@ -197,6 +197,7 @@ function process_encoders(x, encoders::Tuple)
     (final_x, skips) = foldl(encoders; init=(x, ())) do acc, encoder
         (curr_x, skip_connections) = acc
         skip, new_x = encoder(curr_x)
+        # println("Encoder output size: $(size(new_x))")
         (new_x, (skip_connections..., skip))
     end
 
@@ -209,6 +210,7 @@ function process_encoders(x, t, encoders::Tuple)
     (final_x, skips) = foldl(encoders; init=(x, ())) do acc, encoder
         (curr_x, skip_connections) = acc
         skip, new_x = encoder(curr_x, t)
+        # println("Encoder output size: $(size(new_x))")
         (new_x, (skip_connections..., skip))
     end
 
