@@ -8,7 +8,6 @@ makedocs(;
     authors="murrellb <murrellb@gmail.com> and contributors",
     sitename="Onion.jl",
     format=Documenter.HTML(;
-        canonical="https://MurrellGroup.github.io/Onion.jl",
         edit_link="main",
         assets=String[],
         prettyurls=false,
@@ -22,6 +21,5 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/MurrellGroup/Onion.jl",
     devbranch="main",
 )
