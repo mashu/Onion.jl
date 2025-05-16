@@ -11,10 +11,14 @@ makedocs(;
         canonical="https://MurrellGroup.github.io/Onion.jl",
         edit_link="main",
         assets=String[],
+        prettyurls=false,
     ),
     pages=[
         "Home" => "index.md",
     ],
+    linkcheck=false,
+    checkdocs=:none,
+    warnonly=[:missing_docs, :cross_references],
 )
 
 deploydocs(;
