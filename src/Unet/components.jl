@@ -338,4 +338,4 @@ function (db::DecoderBlock)(x, skip_connection, t)
     t_emb = reshape(t_proj, (1, 1, size(t_proj)...))
     x = x .+ t_emb
     db.residual(x, t)
-end
+end 

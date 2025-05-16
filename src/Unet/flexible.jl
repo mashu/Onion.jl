@@ -206,4 +206,4 @@ function (model::FlexibleUNet)(x::T, t::AbstractVector, labels::AbstractVector) 
     rev_skips = reverse_tuple(skip_connections)
     x = process_decoders(x, t, model.decoders, rev_skips)
     model.final_conv(x)
-end
+end 

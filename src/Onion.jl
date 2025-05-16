@@ -9,10 +9,12 @@ include("DyT.jl")
 include("StarGLU.jl")
 include("GQAttention.jl")
 include("RoPE.jl")
-include("UNet.jl")
-include("FlexibleUNet.jl")
+include("Unet/Unet.jl")
 include("FSQ.jl")
 include("IPAHelpers.jl")
+
+# Export Unet as a submodule
+export Unet
 
 export
     #shared:
@@ -33,17 +35,8 @@ export
     chunk,
     unchunk,
     self_att_padding_mask,
-    cross_att_padding_mask,
-    # UNet components:
-    GaussianFourierProjection,
-    TimeEmbedding,
-    ResidualBlock,
-    EncoderBlock,
-    DecoderBlock,
-    Bottleneck,
-    FlexibleUNet,
-    # UNet helper functions:
-    reverse_tuple,
-    process_encoders,
-    process_decoders
+    cross_att_padding_mask
+    
+# UNet components are now accessed via Onion.Unet namespace
+# This keeps documentation organized by module structure
 end
