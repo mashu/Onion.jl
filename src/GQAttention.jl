@@ -222,3 +222,22 @@ function causal_mask(h::AbstractArray{T}) where T<:AbstractFloat
         return mask
     end
 end
+
+
+
+struct DART{A}
+    transformer_block::A
+end
+#Note: the mask acts on the "unrolled" sequence.
+function (dart::DART)(x; mask = causal_mask(reshape(x, size(x,1), :, size(x)[4:end]...)))
+    h = reshape(x, size(x,1), :, size(x)[4:end]...)
+    return reshape(dart.transformer_block(h, 1, nothing, mask), size(x))
+end
+Flux.@layer DART
+export DART
+
+
+#=
+l = DART(TransformerBlock(64, 8, 8));
+l(randn(Float32, 64, 4, 20, 1)) |> size
+=#
