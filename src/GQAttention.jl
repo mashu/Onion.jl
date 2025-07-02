@@ -214,7 +214,7 @@ end
 
 "Doubly Auto-Regressive Transformer" (DART) is a convenience layer wrapping a
 transformer block that can be used to model auto-regressive data represented
-along more than one dimension.
+along two dimensions.
 
 !!! note
     The mask acts on the flattened tokens sequence.
