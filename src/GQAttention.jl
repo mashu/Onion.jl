@@ -210,28 +210,27 @@ function causal_mask(h::AbstractArray{T}) where T<:AbstractFloat
 end
 
 """
-    DART(transformer_block::TransformerBlock)
+    DART(transformer; mask=:causal)
 
 "Doubly Auto-Regressive Transformer" (DART) is a convenience layer wrapping a
 transformer block that can be used to model auto-regressive data represented
 along more than one dimension.
 
 !!! note
-    The mask acts on the "unrolled" sequence, 
+    The mask acts on the flattened tokens sequence.
 
 # Examples
 
 ```julia
 julia> dart = DART(TransformerBlock(64, 8, 8));
 
-julia> x = randn(Float32, 64, 4, 20, 1);
+julia> x = randn(Float32, 64, 4, 20);
 
 julia> dart(x) |> size
-(64, 4, 20, 1)
+(64, 4, 20)
 
-julia> dart(x, mask=:causal) |> size
-
-l(randn(Float32, 64, 4, 20, 1), mask=causal_mask(randn(Float32, 64, 4, 20, 1))) |> size
+julia> dart(x; mask=fill(true, 4*20, 4*20)) |> size
+(64, 4, 20)
 ```
 """
 @concrete struct DART
