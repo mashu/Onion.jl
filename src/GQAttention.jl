@@ -1,13 +1,13 @@
 #Scaled dot product attention
-function sdpa(xq::AbstractArray{T}, xk::AbstractArray{T}, xv::AbstractArray{T}, head_dim::Int, mask = 0) where T
-    A = softmax(batched_mul(batched_transpose(xk), xq) / sqrt(T(head_dim)) .+ mask; dims=1)
+function sdpa(xq::AbstractArray{T}, xk::AbstractArray{T}, xv::AbstractArray{T}, mask = 0) where T
+    A = softmax(batched_mul(batched_transpose(xk), xq) / sqrt(T(size(xq, 1))) .+ mask; dims=1)
     return batched_mul(xv, A)
 end
 
 #For the case where the mask differs for each element in a batch
-function sdpa(xq::AbstractArray{T}, xk::AbstractArray{T}, xv::AbstractArray{T}, head_dim::Int, mask::AbstractArray{T, 3}) where T
+function sdpa(xq::AbstractArray{T}, xk::AbstractArray{T}, xv::AbstractArray{T}, mask::AbstractArray{T, 3}) where T
     d1,d2 = size(xk, 2), size(xq, 2)
-    A = softmax(reshape(reshape(batched_mul(batched_transpose(xk), xq) / sqrt(T(head_dim)), d1, d2, :, size(mask, 3)) .+ reshape(mask, d1, d2, 1, :), d1, d2, :), dims=1)
+    A = softmax(reshape(reshape(batched_mul(batched_transpose(xk), xq) / sqrt(T(size(xq, 1))), d1, d2, :, size(mask, 3)) .+ reshape(mask, d1, d2, 1, :), d1, d2, :), dims=1)
     return batched_mul(xv, A)
 end
 
@@ -82,37 +82,28 @@ function Attention(dim::Int, n_heads::Int, n_kv_heads=n_heads; qkv_bias=false)
 end
 
 # Backward compatibility method for self-attention with existing interface
-function (attn::Attention)(x::AbstractArray{T}, start_pos::Integer=1, rope=nothing, mask=0) where T
-    return attn(x, x, start_pos, rope, mask)
-end
+(attn::Attention)(x::AbstractArray, start_pos, rope=identity, mask=0) =
+    attn(x, x, start_pos, rope, mask)
 
-function (attn::Attention)(x_query::AbstractArray{T}, x_key::AbstractArray{T}, start_pos::Integer=1, rope=nothing, mask=0) where T
-    xq = attn.wq(x_query)
-    xk = attn.wk(x_key)
-    xv = attn.wv(x_key)
+(attn::Attention)(xq::AbstractArray, xk::AbstractArray, start_pos, rope=identity, mask=0) =
+    attn(xq, xk; start_pos, rope, mask)
 
-    xq = rearrange(xq, ((:head_dim, :heads), :len, ..) --> (:head_dim, :len, :heads, ..); attn.head_dim)
-    xk = rearrange(xk, ((:head_dim, :heads), :len, ..) --> (:head_dim, :len, :heads, ..); attn.head_dim)
-    xv = rearrange(xv, ((:head_dim, :heads), :len, ..) --> (:head_dim, :len, :heads, ..); attn.head_dim)
+function (attn::Attention)(xq::AbstractArray, xk::AbstractArray=xq; start_pos=1, rope=identity, mask=0)
+    q = rearrange(attn.wq(xq), ((:head_dim, :heads), :len, ..) --> (:head_dim, :len, :heads, ..); attn.head_dim)
+    k = rearrange(attn.wk(xk), ((:head_dim, :heads), :len, ..) --> (:head_dim, :len, :heads, ..); attn.head_dim)
+    v = rearrange(attn.wv(xk), ((:head_dim, :heads), :len, ..) --> (:head_dim, :len, :heads, ..); attn.head_dim)
 
-    if rope isa RoPE
-        xq, xk = rope(xq), rope(xk)
-    end
+    # compat -- default was previously `nothing`
+    isnothing(rope) && (rope = identity)
+    xq, xk = rope(xq), rope(xk)
 
-    xq_for_attn = rearrange(xq, (:head_dim, :len, :heads, ..) --> (:head_dim, :len, (:heads, ..)))
+    q_per_kv = attn.n_heads ÷ attn.n_kv_heads # for multi-query attention    
+    q_heads = rearrange(q, (:head_dim, :len, ..) --> (:head_dim, :len, (..,)))
+    k_heads = repeat(k, (:head_dim, :len, ..) --> (:head_dim, :len, (:q_per_kv, ..)); q_per_kv)
+    v_heads = repeat(v, (:head_dim, :len, ..) --> (:head_dim, :len, (:q_per_kv, ..)); q_per_kv)
 
-    xk_for_attn, xv_for_attn = if attn.n_heads == attn.n_kv_heads
-        rearrange(xk, (:head_dim, :len, ..) --> (:head_dim, :len, (..,))),
-        rearrange(xv, (:head_dim, :len, ..) --> (:head_dim, :len, (..,)))
-    else
-        n_rep = attn.n_heads ÷ attn.n_kv_heads # for multi-query attention
-        repeat(xk, (:head_dim, :len, ..) --> (:head_dim, :len, (:n_rep, ..)); n_rep),
-        repeat(xv, (:head_dim, :len, ..) --> (:head_dim, :len, (:n_rep, ..)); n_rep)
-    end
-
-    output = sdpa(xq_for_attn, xk_for_attn, xv_for_attn, attn.head_dim, mask)
+    output = sdpa(q_heads, k_heads, v_heads, mask)
     output = rearrange(output, (:head_dim, :len, (:heads, :batch)) --> ((:head_dim, :heads), :len, :batch); heads=attn.n_heads)
-
     return attn.wo(output)
 end
 
@@ -160,14 +151,17 @@ function TransformerBlock(
     )
 end
 
-function (block::TransformerBlock)(x, start_pos, rope, mask = 0)
+function (block::TransformerBlock)(x; start_pos=1, rope=identity, mask=0)
     h = x + block.attention(block.attention_norm(x), start_pos, rope, mask)
     out = h + block.feed_forward(block.ffn_norm(h))
     return out
 end
 
-Flux.@layer TransformerBlock
+# compat
+(block::TransformerBlock)(x, start_pos, rope=identity, mask=0) =
+    block(x; start_pos, rope, mask)
 
+Flux.@layer TransformerBlock
 
 
 @concrete struct AdaTransformerBlock
@@ -190,7 +184,7 @@ function AdaTransformerBlock(
 end
 
 function (block::AdaTransformerBlock)(x, cond, rope, mask)
-    h = x + block.attention(block.attention_norm(x, cond), 0, rope, mask)
+    h = x + block.attention(block.attention_norm(x, cond); start_pos=0, rope, mask)
     out = h + block.feed_forward(block.ffn_norm(h, cond))
     return out
 end
@@ -198,13 +192,12 @@ end
 Flux.@layer AdaTransformerBlock
 
 
-
-function causal_mask(h::AbstractArray{T}) where T<:AbstractFloat
-    Flux.ChainRulesCore.ignore_derivatives() do
-        _, seqlen = size(h)
-        mask = similar(h, seqlen, seqlen)
-        mask .= T(-Inf)
-        mask = tril(mask, -1) #This is swapped because we're using the slightly more efficient dim setup
+function causal_mask(h::AbstractArray{<:AbstractFloat})
+    @ignore_derivatives begin
+        _, N = size(h)
+        mask = similar(h, N, N)
+        fill!(mask, -Inf)
+        tril!(mask, -1) # This is swapped because we're using the slightly more efficient dim setup
         return mask
     end
 end
@@ -222,14 +215,11 @@ along two dimensions.
 # Examples
 
 ```julia
-julia> dart = DART(TransformerBlock(64, 8, 8));
+julia> dart = DART(TransformerBlock(64, 8));
 
 julia> x = randn(Float32, 64, 4, 20);
 
 julia> dart(x) |> size
-(64, 4, 20)
-
-julia> dart(x; mask=fill(true, 4*20, 4*20)) |> size
 (64, 4, 20)
 ```
 """
@@ -239,10 +229,8 @@ end
 
 function (dart::DART)(x::AbstractArray; mask=:causal)
     h = rearrange(x, (:d, :K, :L, ..) --> (:d, (:K, :L), ..))
-    mask = mask === :causal ? causal_mask(h) : mask
-    return reshape(dart.transformer(h, 1, nothing, mask), size(x))
+    mask === :causal && (mask = causal_mask(h))
+    return reshape(dart.transformer(h; mask), size(x))
 end
 
 Flux.@layer DART
-
-export DART
