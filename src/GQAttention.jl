@@ -95,7 +95,7 @@ function (attn::Attention)(xq::AbstractArray, xk::AbstractArray=xq; start_pos=1,
 
     # compat -- default was previously `nothing`
     isnothing(rope) && (rope = identity)
-    xq, xk = rope(xq), rope(xk)
+    q, k = rope(q), rope(k)
 
     q_per_kv = attn.n_heads ÷ attn.n_kv_heads # for multi-query attention    
     q_heads = rearrange(q, (:head_dim, :len, ..) --> (:head_dim, :len, (..,)))
