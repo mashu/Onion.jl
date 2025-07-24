@@ -227,10 +227,10 @@ julia> dart(x) |> size
     transformer
 end
 
-function (dart::DART)(x::AbstractArray; mask=:causal)
+function (dart::DART)(x::AbstractArray; mask=:causal, kws...)
     h = rearrange(x, (:d, :K, :L, ..) --> (:d, (:K, :L), ..))
     mask === :causal && (mask = causal_mask(h))
-    return reshape(dart.transformer(h; mask), size(x))
+    return reshape(dart.transformer(h; mask, kws...), size(x))
 end
 
 Flux.@layer DART
