@@ -58,4 +58,12 @@ export IPAblock
 export CrossFrameIPA
 export pair_encode
 
+include("MultidimRoPE.jl")
+export MultidimRoPE
+
+include("STRING.jl")
+export STRINGRoPE
+export STRINGTransformerBlock
+export AdaSTRINGTransformerBlock
+
 end
