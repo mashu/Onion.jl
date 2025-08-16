@@ -1,3 +1,5 @@
+#Related: https://arxiv.org/pdf/2403.13298v1
+
 struct MultidimRoPE
     theta::Float32
 end
