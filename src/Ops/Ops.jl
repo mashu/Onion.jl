@@ -9,11 +9,7 @@ using Statistics: mean, var
 
 
 softmax(x::AbstractArray) = NNlib.softmax(x)
-
-function softmax(x::AnyGPUArray)
-    y = NNop.online_softmax(reshape(x, size(x, 1), :))
-    return reshape(y, size(x))
-end
+softmax(x::AnyGPUArray) = NNop.online_softmax(x)
 
 
 function rms_norm(x::AbstractArray, w::AbstractVector; eps)
@@ -40,24 +36,46 @@ end
 
 
 using NNlib: ⊠
+using ..Onion: causal_mask
 
 const Maybe{T} = Union{T, Nothing}
 
-fix_mask(mask) = mask
-fix_mask(mask::AbstractArray{<:Any, 3}) = rearrange(mask, einops"kl ql b -> kl ql 1 b")
+apply_pair_bias(a, b::AbstractArray) = a .+ rearrange(b, einops"h ql kl ... -> kl ql h ...")
+apply_pair_bias(a, ::Nothing) = a
 
-function naive_attention(
+apply_pad_mask(a, b::AbstractArray) = a .+ rearrange(log.(b), einops"kl ... -> kl 1 1 ...")
+apply_pad_mask(a, ::Nothing) = a
+
+apply_causal_mask(a, causal) = causal ? a .+ causal_mask(a) : a
+
+function sdpa(
     q::AbstractArray{T}, k::AbstractArray{T}, v::AbstractArray{T};
-    mask=false,
+    pair::Maybe{AbstractArray{T}} = nothing,
+    kpad_mask::Maybe{AbstractArray} = nothing,
+    causal::Bool = false,
 ) where T<:Number
     d = size(q, 1)
     kT = rearrange(k, einops"d kl ... -> kl d ...")
-    a = kT ⊠ q ./ √T(d) .+ fix_mask(mask)
+    a = kT ⊠ q ./ √T(d)
+    a = apply_pair_bias(a, pair)
+    a = apply_pad_mask(a, kpad_mask)
+    a = apply_causal_mask(a, causal)
     return v ⊠ softmax(a)
 end
 
-function flash_attention(q::AnyGPUArray, k::AnyGPUArray, v::AnyGPUArray; kws...)
-    NNop.flash_attention(q, k, v; kws...)
+function sdpa(
+    q::AnyGPUArray, k::AnyGPUArray, v::AnyGPUArray;
+    causal=false, pair=nothing, kws...
+)
+    NNop.flash_attention(q, k, v, pair; causal, kws...)
+end
+
+function sdpa(
+    q::AnyGPUArray{<:Any,3}, k::AnyGPUArray{<:Any,3}, v::AnyGPUArray{<:Any,3};
+    kws...
+)
+    q, k, v = rearrange.((q, k, v), einops"... -> ... 1")
+    return rearrange(sdpa(q, k, v; kws...), einops"... 1 -> ...")
 end
 
 end

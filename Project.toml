@@ -1,7 +1,7 @@
 name = "Onion"
 uuid = "fdebf6c2-71da-43a1-b539-c3bc3e09c5c6"
 authors = ["murrellb <murrellb@gmail.com> and contributors"]
-version = "0.1.6"
+version = "0.2.0"
 
 [deps]
 BatchedTransformations = "8ba27c4b-52b5-4b10-bc66-a4fda05aa11b"
@@ -21,8 +21,8 @@ ChainRulesCore = "1.25.2"
 ConcreteStructs = "0.2.3"
 Einops = "0.1.6"
 Flux = "0.16.3"
-GPUArraysCore = "0.2"
+GPUArraysCore = "0.2.0"
 LinearAlgebra = "1"
 NNlib = "0.9.27"
-Statistics = "1"
+NNop = "0.2.0"
 julia = "1.9"
