@@ -34,7 +34,7 @@ function (rope::MultidimRoPE)(x::AbstractArray, positions::AbstractArray)
     d_coords, S_pos, B_pos = size(pos_3d)
     @assert S == S_pos && B == B_pos "Sequence length or batch size mismatch between x and positions"
     num_pairs = D ÷ 2
-    freqs = 1.0f0 ./ (rope.theta .^ (as_dense_on_device(0:2:D-1, x_4d, Float32)[1:num_pairs] ./ D))
+    freqs = 1.0f0 ./ (rope.theta .^ (like(0:2:D-1, x_4d, Float32)[1:num_pairs] ./ D))
     pos_indices = Int.((0:num_pairs-1) .% d_coords .+ 1)
     selected_pos = pos_3d[pos_indices, :, :]
     angles = reshape(freqs, num_pairs, 1, 1) .* selected_pos
