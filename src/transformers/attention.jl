@@ -39,7 +39,9 @@ Flux.@layer Attention
 function Attention(
     in_dim::Int, n_heads::Int, n_kv_heads::Int=n_heads;
     head_dim = in_dim ÷ n_heads, qkv_bias=false,
-    q_norm=identity, k_norm=identity,
+    qk_norm=false,
+    q_norm=qk_norm ? RMSNorm(head_dim) : identity,
+    k_norm=qk_norm ? RMSNorm(head_dim) : identity,
     out_init_scale=1,
 )
     @assert n_heads % n_kv_heads == 0 "n_heads must be divisible by n_kv_heads"

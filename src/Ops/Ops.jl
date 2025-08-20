@@ -9,7 +9,11 @@ using Statistics: mean, var
 
 
 softmax(x::AbstractArray) = NNlib.softmax(x)
-softmax(x::AnyGPUArray) = NNop.online_softmax(x)
+
+function softmax(x::AnyGPUArray)
+    y = NNop.online_softmax(reshape(x, size(x, 1), :))
+    return reshape(y, size(x))
+end
 
 
 function rms_norm(x::AbstractArray, w::AbstractVector; eps)

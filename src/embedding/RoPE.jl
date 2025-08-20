@@ -23,15 +23,39 @@ end
 
 Flux.@layer RoPE trainable=()
 
-Base.getindex(rope::RoPE, i) = @views RoPE(rope.cos[:,i,:,:], rope.sin[:,i,:,:])
+Base.getindex(rope::RoPE, i) = RoPE(selectdim(rope.cos, 2, i), selectdim(rope.sin, 2, i))
 
-function RoPE(dim::Int, end_pos::Int; theta::T=10000f0, start_pos=0) where T
+function apply_scaling!(freqs::AbstractVector; scale_factor=8)
+    low_freq_factor = 1
+    high_freq_factor = 4
+    old_context_len = 8192
+    low_freq_wavelen = old_context_len / low_freq_factor
+    high_freq_wavelen = old_context_len / high_freq_factor
+    for (i, freq) in enumerate(freqs)
+        wavelen = 2π / freq
+        if wavelen > low_freq_wavelen
+            freqs[i] = freq / scale_factor
+        elseif wavelen > high_freq_wavelen
+            @assert low_freq_wavelen != high_freq_wavelen
+            smooth = (old_context_len / wavelen - low_freq_factor) / 
+                    (high_freq_factor - low_freq_factor)
+            freqs[i] = (1 - smooth) * freq / scale_factor + smooth * freq
+        end
+    end
+    return freqs
+end
+
+function RoPE(
+    dim::Int, end_pos::Int; 
+    theta::T=10000f0, use_scaled=true, scale_factor=8, start_pos=0
+) where T
     freqs = 1f0 ./ (theta .^ (T.(0:2:dim-1)[1:dim÷2] ./ dim))
+    use_scaled && apply_scaling!(freqs; scale_factor)
     freqs_complex = cis.(T.(start_pos:end_pos-1) * freqs')
     cos = permutedims(real(freqs_complex), (2, 1))  # (head_dim/2, seq_len)
     sin = permutedims(imag(freqs_complex), (2, 1))
-    cos = reshape(cos, (dim÷2, end_pos - start_pos, 1, 1))
-    sin = reshape(sin, (dim÷2, end_pos - start_pos, 1, 1))
+    cos = reshape(cos, dim÷2, end_pos - start_pos)
+    sin = reshape(sin, dim÷2, end_pos - start_pos)
     return RoPE(cos, sin)
 end
 
@@ -40,9 +64,9 @@ end
 # Use this one if you're using the Hugging Face weights.
 function (rope::RoPE)(x)
     head_dim = size(x, 1)
-    x1 = x[1:head_dim÷2, :, :, :]
-    x2 = x[head_dim÷2+1:end, :, :, :]
-    return vcat(  
+    x1 = selectdim(x, 1, 1:head_dim÷2)
+    x2 = selectdim(x, 1, head_dim÷2+1:size(x, 1))
+    return vcat(
         x1 .* rope.cos .- x2 .* rope.sin,
         x2 .* rope.cos .+ x1 .* rope.sin
     )
