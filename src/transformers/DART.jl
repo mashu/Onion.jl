@@ -25,13 +25,8 @@ end
 
 Flux.@layer DART
 
-function (dart::DART)(x::AbstractArray; kws...)
-    h = rearrange(x, (:d, :K, :L, ..) --> (:d, (:K, :L), ..))
-    return reshape(dart.transformer(h; kws...), size(x))
-end
-
 function (dart::DART)(x::AbstractArray; pair_feats=nothing, kws...)
     h = rearrange(x, (:d, :K, :L, ..) --> (:d, (:K, :L), ..))
-    isnothing(pair_feats) || (pair_feats = repeat(pair_feats, einops"d ql kl ... -> d (r ql) (r kl) ...", r=size(h, 2)))
-    return dart(h; pair_feats, kws...)
+    isnothing(pair_feats) || (pair_feats = repeat(pair_feats, einops"h ql kl ... -> h (r ql) (r kl) ...", r=size(h, 2)))
+    return reshape(dart.transformer(h; pair_feats, kws...), size(x))
 end
