@@ -42,7 +42,6 @@ export Bottleneck
 
 include("UNet/FlexibleUNet.jl")
 export FlexibleUNet
-export reverse_tuple
 export process_encoders
 export process_decoders
 

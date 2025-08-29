@@ -4,7 +4,7 @@ using Flux
 
 @testset "Onion.jl" begin
     # Test UNet components
-    #=@testset "UNet Components" begin
+    @testset "UNet Components" begin
         # Test TimeEmbedding
         @testset "TimeEmbedding" begin
             time_emb = TimeEmbedding(256, 10, 128)
@@ -65,7 +65,7 @@ using Flux
             labels = rand(1:10, 2)
 
             # Test unconditional forward pass
-            y1 = model(x)
+            y1 = @inferred model(x)
             @test size(y1) == (32, 32, 3, 2)
 
             # Test time-conditioned forward pass
@@ -79,10 +79,6 @@ using Flux
 
         # Test helper functions
         @testset "UNet Helpers" begin
-            # Test reverse_tuple
-            t = (1, 2, 3, 4, 5)
-            rt = reverse_tuple(t)
-            @test rt == (5, 4, 3, 2, 1)
 
             # Test process_encoders and process_decoders with a mini-model
             enc1 = EncoderBlock(3, 16)
@@ -101,11 +97,11 @@ using Flux
             @test size(x_out) == (8, 8, 32, 2)
 
             # Test process_decoders
-            rev_skips = reverse_tuple(skips)
+            rev_skips = reverse(skips)
             y = process_decoders(x_out, decoders, rev_skips)
             @test size(y) == (32, 32, 8, 2)
         end
-    end=#
+    end
 
     @testset "DyT" begin
         dyt = DyT(256)

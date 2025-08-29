@@ -1,16 +1,4 @@
 """
-    reverse_tuple(t::Tuple)
-
-Helper function that reverses the order of elements in a tuple.
-Use for maintaining type stability when reversing the order of skip connections.
-"""
-@generated function reverse_tuple(t::Tuple)
-    N = length(t.parameters)
-    args = [:(t[$i]) for i in N:-1:1]
-    return :(tuple($(args...)))
-end
-
-"""
     FlexibleUNet(;
         in_channels=3,
         out_channels=3,
@@ -240,7 +228,7 @@ function (model::FlexibleUNet)(x)
     x = model.bottleneck(x)
 
     # Apply decoder blocks with skip connections (reverse skip connections)
-    rev_skips = reverse_tuple(skip_connections)
+    rev_skips = reverse(skip_connections)
     x = process_decoders(x, model.decoders, rev_skips)
 
     # Apply final convolution
@@ -258,7 +246,7 @@ function (model::FlexibleUNet)(x, t::T) where T <: AbstractArray
     x = model.bottleneck(x, t)
 
     # Apply decoder blocks with skip connections (reverse skip connections)
-    rev_skips = reverse_tuple(skip_connections)
+    rev_skips = reverse(skip_connections)
     x = process_decoders(x, t, model.decoders, rev_skips)
 
     # Apply final convolution
@@ -276,7 +264,7 @@ function (model::FlexibleUNet)(x, t::T, labels::L) where {T <: AbstractArray, L 
     x = model.bottleneck(x, t)
 
     # Apply decoder blocks with skip connections (reverse skip connections)
-    rev_skips = reverse_tuple(skip_connections)
+    rev_skips = reverse(skip_connections)
     x = process_decoders(x, t, model.decoders, rev_skips)
 
     # Apply final convolution
