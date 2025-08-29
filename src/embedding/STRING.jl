@@ -30,14 +30,14 @@ x_rot = rope(x, positions)
     A_param
 end
 
-Flux.@layer STRINGRoPE trainable=(thetas, A_param)
+Flux.@layer STRINGRoPE
 
 function STRINGRoPE(head_dim::Int, n_heads::Int, d_coords::Int; init_scale=0.001f0, theta=10000f0)
     @assert iseven(head_dim) "Head dimension must be even."
     num_pairs = head_dim ÷ 2
     freqs = 1.0f0 ./ (theta .^ (Float32.(0:2:head_dim-1)[1:num_pairs] ./ head_dim))
-    thetas = repeat(reshape(freqs, :, 1, 1), 1, d_coords, n_heads)  
-    A_param = randn(Float32, head_dim, head_dim, n_heads) * init_scale 
+    thetas = repeat(reshape(freqs, :, 1, 1), 1, d_coords, n_heads)
+    A_param = randn(Float32, head_dim, head_dim, n_heads) * init_scale
     STRINGRoPE(head_dim, n_heads, d_coords, thetas, A_param)
 end
 

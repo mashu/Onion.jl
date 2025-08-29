@@ -8,7 +8,8 @@ using Flux
 using LinearAlgebra
 
 include("shared.jl")
-export glut, zeros_like, ones_like
+export glut
+export like, zeros_like, ones_like
 
 include("masks.jl")
 export self_att_padding_mask
