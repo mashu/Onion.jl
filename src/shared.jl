@@ -48,6 +48,26 @@ The element type and dimensions default to `eltype(x)` and `size(x)`.
 ones_like(x::AbstractArray, args...) = like(true, x, args...)
 
 """
+    falses_like(x::AbstractArray, [T=eltype(x)], [dims=size(x)])
+
+Returns an array of falses of type `Bool` with an array type similar to `x`.
+The dimensions default to `size(x)`.
+
+`falses_like(args...)` is equivalent to `like(false, Bool, args...)`
+"""
+falses_like(x::AbstractArray, args...) = zeros_like(x, Bool, args...)
+
+"""
+    trues_like(x::AbstractArray, [T=eltype(x)], [dims=size(x)])
+
+Returns an array of trues of type `Bool` with an array type similar to `x`.
+The dimensions default to `size(x)`.
+
+`trues_like(args...)` is equivalent to `like(true, Bool, args...)`
+"""
+trues_like(x::AbstractArray, args...) = ones_like(x, Bool, args...)
+
+"""
     like(x::AbstractArray, array::DenseArray, T=eltype(x))
 
 Like `like(v, x::AbstractArray, args...)`, but an arbitrary `AbstractArray`, such as an `AbstractRange`,

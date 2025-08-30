@@ -7,9 +7,16 @@ using Einops
 using Flux
 using LinearAlgebra
 
+using Reexport
+@reexport using Flux:
+    Flux,
+    Dense,
+    Embedding,
+    Chain
+
 include("shared.jl")
 export glut
-export like, zeros_like, ones_like
+export like, zeros_like, ones_like, falses_like, trues_like
 
 include("masks.jl")
 export self_att_padding_mask
