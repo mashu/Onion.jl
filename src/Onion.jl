@@ -50,17 +50,4 @@ export FSQ
 export chunk
 export unchunk
 
-using Reexport
-
-@reexport using Flux:
-    Flux,
-    Dense,
-    Embedding,
-    Chain
-
-@reexport using RandomFeatureMaps:
-    RandomFeatureMaps,
-    RandomFourierFeatures,
-    RandomTriangleFeatures
-
 end
