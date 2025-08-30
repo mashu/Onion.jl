@@ -7,13 +7,6 @@ using Einops
 using Flux
 using LinearAlgebra
 
-using Reexport
-@reexport using Flux:
-    Flux,
-    Dense,
-    Embedding,
-    Chain
-
 include("shared.jl")
 export glut
 export like, zeros_like, ones_like, falses_like, trues_like
@@ -56,5 +49,18 @@ include("FSQ.jl")
 export FSQ
 export chunk
 export unchunk
+
+using Reexport
+
+@reexport using Flux:
+    Flux,
+    Dense,
+    Embedding,
+    Chain
+
+@reexport using RandomFeatureMaps:
+    RandomFeatureMaps,
+    RandomFourierFeatures,
+    RandomTriangleFeatures
 
 end
