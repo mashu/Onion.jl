@@ -22,7 +22,7 @@ julia> gate(Y, X) |> size
     W; σ; op
 end
 
-@layer Modulator
+Flux.@layer Modulator
 
 function Modulator((in_dim, out_dim)::Pair{Int,Int}; σ=sigmoid, op=*)
     W = Dense(in_dim => out_dim, bias=false)
