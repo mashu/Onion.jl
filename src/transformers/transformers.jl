@@ -1,3 +1,6 @@
+include("modulator.jl")
+export Modulator
+
 include("attention.jl")
 export Attention
 
