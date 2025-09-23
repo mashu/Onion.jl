@@ -12,7 +12,7 @@ struct GaussianFourierProjection{T,S<:AbstractArray{T}}
     scale::T
 end
 
-Flux.@layer GaussianFourierProjection
+@layer GaussianFourierProjection
 Flux.trainable(::GaussianFourierProjection) = (;)
 
 function GaussianFourierProjection(embed_dim::Int, scale::T=32.0f0) where T<:AbstractFloat
@@ -59,7 +59,7 @@ function TimeEmbedding(embed_dim::Int, num_classes::Int, embedding_dim::Int)
     )
 end
 
-Flux.@layer TimeEmbedding
+@layer TimeEmbedding
 
 function (te::TimeEmbedding)(t)
     h = te.proj(t)
@@ -113,7 +113,7 @@ struct ResidualBlock{C1,C2,N1,N2,D,DO,A}
     activation::A
 end
 
-Flux.@layer ResidualBlock
+@layer ResidualBlock
 
 function ResidualBlock(channels::Int; kernel_size=3, time_emb=false, emb_dim=256, dropout=0.0, activation=relu)
     return ResidualBlock(
@@ -186,7 +186,7 @@ struct EncoderBlock{C,N,R,P,D,A}
     activation::A
 end
 
-Flux.@layer EncoderBlock
+@layer EncoderBlock
 
 function EncoderBlock(in_channels::Int, out_channels::Int; time_emb=false, emb_dim=256, dropout=0.0, activation=relu)
     return EncoderBlock(
@@ -246,7 +246,7 @@ struct Bottleneck{C1,N1,R,D,A}
     activation::A
 end
 
-Flux.@layer Bottleneck
+@layer Bottleneck
 
 function Bottleneck(channels::Int; time_emb=false, emb_dim=256, dropout=0.0, activation=relu)
     return Bottleneck(
@@ -306,7 +306,7 @@ struct DecoderBlock{U,C,N,R,D,A}
     activation::A
 end
 
-Flux.@layer DecoderBlock
+@layer DecoderBlock
 
 function DecoderBlock(in_channels::Int, out_channels::Int; time_emb=false, emb_dim=256, dropout=0.0, activation=relu)
     return DecoderBlock(

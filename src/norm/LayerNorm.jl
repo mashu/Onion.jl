@@ -15,7 +15,7 @@ y = ln(x)
     eps
 end
 
-Flux.@layer LayerNorm
+@layer LayerNorm
 
 LayerNorm(dim::Int; eps::T=1f-6) where T = LayerNorm(ones(T, dim), zeros(T, dim), eps)
 

@@ -16,7 +16,7 @@ struct StarGLU{W, F}
     act::F
 end
 
-Flux.@layer StarGLU
+@layer StarGLU
 
 function StarGLU(dim::Int, ff_hidden_dim::Int; act=Flux.swish, out_init_scale=1)
     w1 = Dense(dim => ff_hidden_dim, bias=false)

@@ -27,7 +27,7 @@ struct Framemover{A,B}
     rot_decode::B
 end
 
-Flux.@layer Framemover
+@layer Framemover
 
 function Framemover(dim::Int; init_gain = 0.1f0)
     loc_decode = Dense(dim => 3, bias = false, init = Flux.glorot_uniform(gain = init_gain))
@@ -59,7 +59,7 @@ struct IPAblock{A,B,C,D}
     ff::D
 end
 
-Flux.@layer IPAblock
+@layer IPAblock
 
 IPAblock(dim::Int, ipa; ln1 = Flux.LayerNorm(dim), ln2 = Flux.LayerNorm(dim), ff = StarGLU(dim, 3dim)) = IPAblock(ln1, ipa, ln2, ff)
 
@@ -93,7 +93,7 @@ struct CrossFrameIPA{A,B}
     ln::A
     ipa::B
 end
-Flux.@layer CrossFrameIPA
+@layer CrossFrameIPA
 CrossFrameIPA(dim::Int, ipa; ln = Flux.LayerNorm(dim)) = CrossFrameIPA(ln, ipa)
 function (ipa_block::CrossFrameIPA)(frames1::Rigid, frames2::Rigid, x; pair_feats = nothing, cond = nothing, mask = 0, kwargs...)
     T1 = values(linear(frames1)), values(translation(frames1))

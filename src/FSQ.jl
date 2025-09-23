@@ -11,7 +11,7 @@ struct FSQ{A<:Integer, B}
     chunk_size::Int
 end
 
-Flux.@layer FSQ
+@layer FSQ
 
 function FSQ(l::A, chunk_size::Int) where A
     scal = Int(floor.(l/2))

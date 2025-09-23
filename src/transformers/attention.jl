@@ -34,7 +34,7 @@ output = attn(x)
     n_kv_heads::Int
 end
 
-Flux.@layer Attention
+@layer Attention
 
 function Attention(
     in_dim::Int, n_heads::Int, n_kv_heads::Int=n_heads;

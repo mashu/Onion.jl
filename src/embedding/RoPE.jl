@@ -21,7 +21,7 @@ struct RoPE{A<:AbstractArray}
     sin::A
 end
 
-Flux.@layer RoPE trainable=()
+@layer RoPE trainable=()
 
 Base.getindex(rope::RoPE, i) = RoPE(selectdim(rope.cos, 2, i), selectdim(rope.sin, 2, i))
 

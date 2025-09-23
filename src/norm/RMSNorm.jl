@@ -9,7 +9,7 @@ Root Mean Square Layer Normalization. As used in Llama3.
     offset
 end
 
-Flux.@layer RMSNorm
+@layer RMSNorm
 
 function RMSNorm(dim::Int; T=Float32, eps=1f-5, zero_centered=false)
     weight = zero_centered ? zeros(T, dim) : ones(T, dim)

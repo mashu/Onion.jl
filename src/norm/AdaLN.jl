@@ -16,7 +16,7 @@ h = aln(h, cond)
     scale  
 end
 
-Flux.@layer AdaLN
+@layer AdaLN
 
 AdaLN(dim::Int, cond_dim::Int) = AdaLN(LayerNorm(dim), Dense(cond_dim, dim), Dense(cond_dim, dim))
 

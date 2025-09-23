@@ -69,7 +69,7 @@ struct FlexibleUNet{E,B,D,FC,T}
     time_embed::T
 end
 
-Flux.@layer FlexibleUNet
+@layer FlexibleUNet
 
 function FlexibleUNet(;
     in_channels=3,

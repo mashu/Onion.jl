@@ -30,7 +30,7 @@ h = t(h, 1, rope[1:seqlen], mask)
     pair_proj
 end
 
-Flux.@layer TransformerBlock
+@layer TransformerBlock
 
 function TransformerBlock(
     in_dim::Int, n_heads::Int,
@@ -79,7 +79,7 @@ end
     rope
 end
 
-Flux.@layer STRINGBlock
+@layer STRINGBlock
 
 function STRINGBlock(block::TransformerBlock, d_coords::Int; kws...)
     rope = STRINGRoPE(block.attention.head_dim, block.attention.n_heads, d_coords; kws...)

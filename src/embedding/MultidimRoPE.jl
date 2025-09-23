@@ -4,7 +4,7 @@ end
 
 MultidimRoPE(; theta=10000f0) = MultidimRoPE(theta)
 
-Flux.@layer MultidimRoPE trainable=()
+@layer MultidimRoPE trainable=()
 
 """
     MultidimRoPE(; theta=10000f0)

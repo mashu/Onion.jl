@@ -23,7 +23,7 @@ julia> dart(x) |> size
     transformer
 end
 
-Flux.@layer DART
+@layer DART
 
 function (dart::DART)(x::AbstractArray; pair_feats=nothing, kws...)
     h = rearrange(x, (:d, :K, :L, ..) --> (:d, (:K, :L), ..))

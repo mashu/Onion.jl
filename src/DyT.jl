@@ -4,7 +4,7 @@ struct DyT{T <: AbstractFloat, V <: AbstractVector{T}}
     bias::V    # β
 end
 
-Flux.@layer DyT
+@layer DyT
 
 """
     DyT(dim::Integer; init_alpha::T = 0.5f0)
