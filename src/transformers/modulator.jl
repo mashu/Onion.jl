@@ -19,18 +19,24 @@ julia> gate(Y, X) |> size
 ```
 """
 @concrete struct Modulator
-    W; σ; op
+    W; σ; op; shape
 end
 
 Flux.@layer Modulator
 
-function Modulator((in_dim, out_dim)::Pair{Int,Int}; σ=sigmoid, op=*)
-    W = Dense(in_dim => out_dim, bias=false)
-    return Modulator(W, σ, op)
+function Modulator((in, out)::Pair{Int,Int}, σ=sigmoid; op=*, shape=(out,))
+    prod(shape) == out || throw(DimensionMismatch("prod(shape) must be equal to out"))
+    W = Dense(in => out, bias=false)
+    return Modulator(W, σ, op, shape)
+end
+
+function Modulator((in, shape)::Pair{Int,<:Tuple{Vararg{Int}}}; kws...)
+    return Modulator(in => prod(shape); shape, kws...)
 end
 
 function (m::Modulator)(Y, X)
     W, σ, * = m.W, m.σ, m.op
-    Y′ = Y .* σ.(W(X))
+    WX = reshape(W(X), m.shape..., size(X)[2:end]...)
+    Y′ = Y .* σ.(WX)
     return Y′
 end
