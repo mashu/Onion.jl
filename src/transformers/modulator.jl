@@ -22,7 +22,7 @@ julia> gate(Y, X) |> size
     W; σ; op; shape
 end
 
-Flux.@layer Modulator
+@layer Modulator
 
 function Modulator((in, out)::Pair{Int,Int}, σ=sigmoid; op=*, shape=(out,))
     prod(shape) == out || throw(DimensionMismatch("prod(shape) must be equal to out"))
