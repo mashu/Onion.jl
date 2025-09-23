@@ -18,6 +18,9 @@ export watmul, ⨝
 include("BlockDense.jl")
 export BlockDense
 
+include("Modulator.jl")
+export Modulator
+
 include("masks.jl")
 export self_att_padding_mask
 export cross_att_padding_mask
