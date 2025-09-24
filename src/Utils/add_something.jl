@@ -9,6 +9,8 @@ Adds the arguments together, ignoring `Nothing`s.
 # Examples
 
 ```jldoctest
+julia> using Onion.Utils
+
 julia> 1 ⊞ 2
 3
 
