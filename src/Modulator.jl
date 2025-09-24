@@ -24,10 +24,10 @@ end
 
 @layer Modulator
 
-function Modulator((in, out)::Pair{Int,Int}, σ=sigmoid; op=*, shape=nothing)
-    isnothing(shape) && (shape = out)
+function Modulator((in, out)::Pair{Int,Int}, σ=sigmoid; op=*, bias=false, shape=nothing)
+    shape = isnothing(shape) ? out : shape
     prod(shape) == out || throw(DimensionMismatch("prod(shape) must be equal to out"))
-    W = Dense(in => out, bias=false)
+    W = Dense(in => out; bias)
     return Modulator(W, σ, op, shape)
 end
 
