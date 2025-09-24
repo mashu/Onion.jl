@@ -13,7 +13,7 @@ end
 
 @layer LpNorm
 
-LpNorm{p}(; dims=1, eps=1f-6) where p = LpNorm{p}(dims, eps)
+LpNorm{p}(; dims=1, eps=1f-8) where p = LpNorm{p}(dims, eps)
 LpNorm(p::Int; kws...) = LpNorm{p}(; kws...)
 
 abs3(x) = abs2(x) * abs(x)

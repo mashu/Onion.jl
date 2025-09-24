@@ -29,6 +29,6 @@ include("norm/norm.jl")
 include("convolution/convolution.jl")
 include("transformers/transformers.jl")
 include("embedding/embedding.jl")
-include("InvariantPointAttention/InvariantPointAttention.jl")
+include("ipa/ipa.jl")
 
 end
