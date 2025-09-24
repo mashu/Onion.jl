@@ -9,6 +9,6 @@ We welcome contributions to Onion.jl. Please follow these guidelines when contri
 - Low-level and performance-critical methods should have statically inferrable return types (Tip: use `@code_warntype` or `Test.@inferred`).
 - Layers should preferrably work with any number (including zero) batch dims (Tip: use e.g. [Einops.jl](https://github.com/MurrellGroup/Einops.jl), `Onion.glut`)
 - Layer implementations should be put into a separate file inside a relevant subdirectory of the src directory.
-- Write docstrings for all user-facing functions.
+- Write docstrings for all user-facing types and functions.
   - Helper functions should only have comments.
 - Cite sources. If from a paper/code include a link/ref in a comment or docstring.
