@@ -13,10 +13,6 @@ pkg"registry add https://github.com/MurrellGroup/MurrellGroupRegistry"
 pkg"add Onion"
 ```
 
-## Rules
+## Contributing
 
-- Layers should be structs.
-- Layers should have fully inferrable types (use type parameters)
-- Layers should work with any number (including zero) batch dims (tip: use `glut`)
-- Put each layer in a separate file.
-- Cite. If from a paper/code include a link/ref in a comment.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details.

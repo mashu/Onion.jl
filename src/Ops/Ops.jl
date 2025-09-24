@@ -40,7 +40,7 @@ end
 
 
 using NNlib: ⊠
-using ..Onion: causal_mask
+using ..Onion.Utils: causal_mask
 
 const Maybe{T} = Union{T, Nothing}
 
