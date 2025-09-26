@@ -1,3 +1,6 @@
+include("Linear.jl")
+export Linear
+
 include("BlockDense.jl")
 export BlockDense
 

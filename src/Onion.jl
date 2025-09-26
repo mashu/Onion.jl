@@ -1,6 +1,5 @@
 module Onion
 
-using BatchedTransformations
 using ChainRulesCore
 using ConcreteStructs
 using Einops
@@ -22,13 +21,15 @@ export self_att_padding_mask
 export cross_att_padding_mask
 export causal_mask
 
+const Maybe{T} = Union{T,Nothing}
+
 include("Ops/Ops.jl")
 
 include("miscellaneous/miscellaneous.jl")
 include("norm/norm.jl")
 include("convolution/convolution.jl")
 include("transformers/transformers.jl")
-include("embedding/embedding.jl")
+include("positional-encoding/positional-encoding.jl")
 include("ipa/ipa.jl")
 
 end

@@ -1,11 +1,15 @@
 module Utils
 
+using ArrayInterface: restructure
 using ChainRulesCore
 using Einops
 using LinearAlgebra
 
 include("glut.jl")
 export glut
+
+include("reshapable.jl")
+export reshapable, hardreshape
 
 include("like.jl")
 export like, zeros_like, ones_like, falses_like, trues_like

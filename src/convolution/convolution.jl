@@ -1,6 +1,3 @@
-include("ShortConvolution.jl")
-export ShortConvolution
-
 include("UNet/UNet.jl")
 export GaussianFourierProjection
 export TimeEmbedding

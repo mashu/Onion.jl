@@ -67,8 +67,8 @@ lncall(ln, x, cond) = ln(x, cond)
 lncall(ln, x, cond::Nothing) = ln(x)
 
 #InvariantPointAttention.jl:
-function (ipa_block::IPAblock)(frames::Rigid, x; pair_feats = nothing, cond = nothing, mask = 0, kwargs...)
-    T = values(linear(frames)), values(translation(frames))
+function (ipa_block::IPAblock)(frames::BT.Rigid, x; pair_feats = nothing, cond = nothing, mask = 0, kwargs...)
+    T = values(BT.linear(frames)), values(BT.translation(frames))
     lnx = lncall(ipa_block.ln1,x, cond)
     x = x + ipa_block.ipa(T, lnx, T, lnx, zij = pair_feats, mask = mask, kwargs...) ./ 2
     x = x + ipa_block.ff(lncall(ipa_block.ln2,x, cond)) ./ 2
@@ -76,7 +76,7 @@ function (ipa_block::IPAblock)(frames::Rigid, x; pair_feats = nothing, cond = no
 end
 
 #MessagePassingIPA.jl:
-function (ipa_block::IPAblock)(g, frames::Rigid, x, pair_feats; cond = nothing)
+function (ipa_block::IPAblock)(g, frames::BT.Rigid, x, pair_feats; cond = nothing)
     x = x + ipa_block.ipa(g, lncall(ipa_block.ln1,x, cond), pair_feats, frames) ./ 2
     x = x + ipa_block.ff(lncall(ipa_block.ln2,x, cond)) ./ 2
     return x
@@ -95,9 +95,9 @@ struct CrossFrameIPA{A,B}
 end
 @layer CrossFrameIPA
 CrossFrameIPA(dim::Int, ipa; ln = Flux.LayerNorm(dim)) = CrossFrameIPA(ln, ipa)
-function (ipa_block::CrossFrameIPA)(frames1::Rigid, frames2::Rigid, x; pair_feats = nothing, cond = nothing, mask = 0, kwargs...)
-    T1 = values(linear(frames1)), values(translation(frames1))
-    T2 = values(linear(frames2)), values(translation(frames2))
+function (ipa_block::CrossFrameIPA)(frames1::BT.Rigid, frames2::BT.Rigid, x; pair_feats = nothing, cond = nothing, mask = 0, kwargs...)
+    T1 = values(BT.linear(frames1)), values(BT.translation(frames1))
+    T2 = values(BT.linear(frames2)), values(BT.translation(frames2))
     lnx = Onion.lncall(ipa_block.ln, x, cond)
     x = x + ipa_block.ipa(T1, lnx, T2, lnx, zij = pair_feats, mask = mask, show_warnings = false, kwargs...) ./ 2
     return x

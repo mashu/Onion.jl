@@ -1,8 +1,19 @@
-function watmul(W::AbstractArray{T,3}, x::AbstractArray{T}; r=1) where T
-    x′ = rearrange(x,  einops"(s1 k r) ... -> s1 k r ..."; k=size(W, 3), r)
-    y′ = einsum(W, x′, einops"s2 s1 k, s1 k r ... -> s2 k r ...")::typeof(x′)
-    y  = rearrange(y′, einops"s2 k r ... -> (s2 k r) ...")
+function watmul(W::AbstractArray{T,3}, x::AbstractArray{T}) where T
+    x′ = rearrange(x,  einops"(s1 k) ... -> s1 k (...)"; k=size(W, 3))
+    y′ = einsum(W, x′, einops"s2 s1 k, s1 k ... -> s2 k ...")
+    y  = rearrange(y′, einops"s2 k ... -> (s2 k) ...")
     return y
 end
 
 const ⨝ = watmul
+
+function watmul_mix(
+    W::AbstractArray{T,3}, x₁::AbstractArray{T};
+    W_in::AbstractMatrix{T}
+) where T
+    x₁′ = rearrange(x₁, einops"(s1 k1) ... -> s1 k1 ..."; k1=size(W_in, 1))
+    x₂′ = einsum(x₁′, W_in, einops"s1 k1 ..., k1 k2 -> s1 k2 ...")
+    y₂′ = einsum(W, x₂′, einops"s2 s1 k2, s1 k2 ... -> s2 k2 ...")
+    y₂ = rearrange(y₂′, einops"s2 k2 ... -> (s2 k2) ...")
+    return y₂
+end
