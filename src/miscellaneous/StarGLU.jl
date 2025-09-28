@@ -19,9 +19,9 @@ end
 @layer StarGLU
 
 function StarGLU(dim::Int, ff_hidden_dim::Int; act=Flux.swish, out_init_scale=1)
-    w1 = Dense(dim => ff_hidden_dim, bias=false)
-    w2 = Dense(ff_hidden_dim => dim, bias=false)
-    w3 = Dense(dim => ff_hidden_dim, bias=false)
+    w1 = Linear(dim => ff_hidden_dim, bias=false)
+    w2 = Linear(ff_hidden_dim => dim, bias=false)
+    w3 = Linear(dim => ff_hidden_dim, bias=false)
     w2.weight .*= out_init_scale
     return StarGLU(w1, w2, w3, act)
 end

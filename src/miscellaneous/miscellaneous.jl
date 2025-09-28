@@ -1,8 +1,8 @@
 include("Linear.jl")
 export Linear
 
-include("BlockDense.jl")
-export BlockDense
+include("BlockLinear.jl")
+export BlockLinear
 
 include("DyT.jl")
 export DyT

@@ -20,6 +20,7 @@ export watmul, ⨝
 export self_att_padding_mask
 export cross_att_padding_mask
 export causal_mask
+export bf16
 
 const Maybe{T} = Union{T,Nothing}
 
