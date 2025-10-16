@@ -6,7 +6,7 @@ const ONION_TEST_UNET = get(ENV, "ONION_TEST_UNET", "false") == "true"
 
 @testset "Onion.jl" begin
 
-    include("BlockDense.jl")
+    include("BlockLinear.jl")
     include("Modulator.jl")
     include("DyT.jl")
 
