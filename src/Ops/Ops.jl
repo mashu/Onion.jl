@@ -47,7 +47,7 @@ const Maybe{T} = Union{T, Nothing}
 apply_pair_bias(a, b::AbstractArray) = a .+ rearrange(b, einops"h ql kl ... -> kl ql h ...")
 apply_pair_bias(a, ::Nothing) = a
 
-apply_pad_mask(a, b::AbstractArray) = a .+ rearrange(log.(b), einops"kl ... -> kl 1 1 ...")
+apply_pad_mask(a, b::AbstractArray) = a .+ rearrange(log.(eltype(a).(b)), einops"kl ... -> kl 1 1 ...")
 apply_pad_mask(a, ::Nothing) = a
 
 apply_causal_mask(a, causal) = causal ? a .+ causal_mask(a) : a
