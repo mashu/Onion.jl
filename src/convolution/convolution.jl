@@ -1,15 +1,5 @@
-module UNet
-
-using ChainRulesCore
-using ConcreteStructs
-using Einops
-using Flux
-using LinearAlgebra
-using NNlib
-using Flux: @layer
-
 include("UNet/UNet.jl")
-include("UNet/FlexibleUNet.jl")
+using .UNet
 
 export GaussianFourierProjection
 export TimeEmbedding
@@ -20,5 +10,3 @@ export Bottleneck
 export FlexibleUNet
 export process_encoders
 export process_decoders
-
-end

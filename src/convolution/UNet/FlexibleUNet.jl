@@ -1,5 +1,5 @@
 """
-    Onion.UNet.FlexibleUNet(;
+    FlexibleUNet(;
         in_channels=3,
         out_channels=3,
         depth=3,
