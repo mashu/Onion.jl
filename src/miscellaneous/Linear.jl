@@ -5,7 +5,7 @@
         init=Flux.glorot_uniform
     )
 
-A block-diagonal version of a dense layer. See also [`BlockLinear`](@ref).
+See also [`BlockLinear`](@ref).
 """
 @concrete struct Linear
     weight <: AbstractArray
