@@ -35,7 +35,7 @@ function Framemover(dim::Int; init_gain = 0.1f0)
     return Framemover(loc_decode, rot_decode)
 end
 
-bcd2rot(bcds) = convert(Rotation, BT.QuaternionRotation(imaginary_to_quaternion_rotations(bcds)))
+bcd2rot(bcds) = convert(BT.Rotation, BT.QuaternionRotation(imaginary_to_quaternion_rotations(bcds)))
 
 function (fm::Framemover)(frames, x; t = 0)
     bcds = fm.rot_decode(x) .* glut(1 .- t, ndims(x), 0)

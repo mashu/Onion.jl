@@ -1,7 +1,7 @@
 name = "Onion"
 uuid = "fdebf6c2-71da-43a1-b539-c3bc3e09c5c6"
 authors = ["murrellb <murrellb@gmail.com> and contributors"]
-version = "0.2.11"
+version = "0.2.12"
 
 [deps]
 ArrayInterface = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
