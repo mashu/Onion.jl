@@ -4,7 +4,7 @@ using Flux
 
 const ONION_TEST_UNET = get(ENV, "ONION_TEST_UNET", "false") == "true"
 
-@testset "Onion.jl" begin
+@testset "Onion.jl" verbose=true begin
 
     include("BlockLinear.jl")
     include("Modulator.jl")
@@ -15,7 +15,7 @@ const ONION_TEST_UNET = get(ENV, "ONION_TEST_UNET", "false") == "true"
     include("transformers/transformers.jl")
     
     if ONION_TEST_UNET
-        include("UNet/UNet.jl")
+        include("UNet/test_unet.jl")
     else
         @info "Skipping UNet tests"
     end
