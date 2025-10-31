@@ -43,7 +43,9 @@ jobs:
       - uses: julia-actions/julia-processcoverage@v1
       - name: Generate coverage summary
         run: |
-          julia --project=test -e 'using Coverage; process_folder(); print_summary()' | tee coverage_summary.txt
+          julia --project=test -e 'using Pkg; Pkg.instantiate()'
+          julia --project=test --banner=no -e 'using Coverage; using Logging; global_logger(NullLogger()); cov = process_folder(); covered, total = get_summary(cov); println("Coverage: ", covered, "/", total, " lines (", round(100*covered/total, digits=2), "%)"); for fc in cov; total_lines = count(x -> x !== nothing, fc.coverage); if total_lines > 0; covered_lines = count(x -> x !== nothing && x > 0, fc.coverage); println(fc.filename, ": ", covered_lines, "/", total_lines, " (", round(100*covered_lines/total_lines, digits=1), "%)"); end; end' > coverage_summary.txt 2>&1 || true
+          cat coverage_summary.txt
       - name: Upload coverage as artifact
         uses: actions/upload-artifact@v4
         with:
