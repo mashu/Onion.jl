@@ -3,31 +3,43 @@
 
 Transformer block for GQAttention (as in Llama3).
 
+# Constructor
+
+Creates a transformer block with the specified dimensions:
+
+- `dim`: Model dimension
+- `n_heads`: Number of attention heads
+- `n_kv_heads`: Number of key-value heads (defaults to `n_heads`)
+- `ff_hidden_dim`: Feed-forward hidden dimension (defaults to `4 * dim`)
+- `norm_eps`: Normalization epsilon (defaults to `1f-5`)
+- `qkv_bias`: Whether to use bias in QKV projections (defaults to `false`)
+
 # Forward Pass
 
-The forward pass signature is:
+Call the block as a function to perform the forward pass:
 
 ```julia
 (block::TransformerBlock)(x, xs...; cond=nothing, pair_feats=nothing, pair=block.pair_proj(pair_feats), kws...)
 ```
 
-where:
+**Parameters:**
+
 - `x`: Input tensor of shape `(dim, seqlen, batch)`
-- `xs...`: Additional positional arguments (e.g., RoPE indices)
+- `xs...`: Additional positional arguments passed to attention (e.g., separate key/value tensors for cross-attention)
 - `cond`: Optional conditioning tensor for adaptive normalization. When provided, this is passed to both `attention_norm` and `ffn_norm`. 
   - For regular `RMSNorm` or `LayerNorm`, this parameter is ignored (can be `nothing`)
   - For `AdaLN` (Adaptive Layer Normalization), this is required and should have shape `(cond_dim, batch)` where `cond_dim` matches the dimension specified when creating `AdaLN`
   - When using `AdaLN`, the conditioning tensor is passed directly to the normalization layer. `AdaLN` uses learned linear transformations (Dense layers) to compute scale and shift parameters from the conditioning tensor, which then modulate the normalized output: `output = normalized(x) * (1 + scale(cond)) + shift(cond)`
 - `pair_feats`: Optional pair features for attention
 - `kws...`: Additional keyword arguments passed to attention, including:
+  - `rope`: Optional RoPE function or callable for query positions (e.g., `rope=rope[1:seqlen]`)
+  - `krope`: Optional RoPE function or callable for key positions (defaults to `rope`)
   - `causal::Bool=false`: Enable causal masking
-  - `kpad_mask`: Optional padding mask for keys
+  - `kpad_mask`: Optional padding mask for keys in **probability space** (values in `[0, 1]` where `1` indicates valid key position and `0` indicates padded). Should have shape `(kl, batch)` where `kl` is key length. Pass a sequence-level mask directly (e.g., `ones(Float32, seqlen, batch)` with padded positions set to `0`). The mask is automatically converted to log-space and broadcast over query length and heads by `apply_pad_mask`.
 
-# Masking
+## Examples
 
-The forward pass supports various masking options through keyword arguments:
-
-## Without mask
+### Basic forward pass
 
 ```julia
 dim = 64
@@ -39,11 +51,11 @@ rope = RoPE(dim ÷ n_heads, 1000)
 t = TransformerBlock(dim, n_heads, n_kv_heads)
 h = randn(Float32, dim, seqlen, 1)
 
-# Forward pass without mask
-h = t(h, 1, rope[1:seqlen])
+# Forward pass
+h = t(h; rope=rope[1:seqlen])
 ```
 
-## Causal mask
+### With causal masking
 
 Use `causal=true` to enable causal masking:
 
@@ -57,12 +69,12 @@ t = TransformerBlock(dim, n_heads)
 h = randn(Float32, dim, seqlen, 1)
 
 # Forward pass with causal mask
-h = t(h, 1, rope[1:seqlen]; causal=true)
+h = t(h; rope=rope[1:seqlen], causal=true)
 ```
 
-## Padding mask with self_att_padding_mask
+### With padding mask
 
-Use `kpad_mask` with `self_att_padding_mask` for self-attention padding:
+Use `kpad_mask` for self-attention padding. Pass a sequence-level mask in **probability space** (values in `[0, 1]` where `1` indicates valid position and `0` indicates padding):
 
 ```julia
 dim = 64
@@ -76,19 +88,18 @@ h = randn(Float32, dim, seqlen, batch)
 
 # Create padding mask: sequence-level mask where 1 indicates valid position, 0 indicates padding
 # Example: batch 1 has all positions valid, batch 2 has position 10 padded
-padmask = ones(Float32, seqlen, batch)
-padmask[10, 2] = 0  # Mark position 10 in batch 2 as padding
-
-# Convert to attention mask
-kpad_mask = Onion.self_att_padding_mask(padmask)
+# Shape should be (seqlen, batch)
+kpad_mask = ones(Float32, seqlen, batch)
+kpad_mask[10, 2] = 0  # Mark position 10 in batch 2 as padding
 
 # Forward pass with padding mask
-h = t(h, 1, rope[1:seqlen]; kpad_mask=kpad_mask)
+# Note: The mask is automatically converted to log-space and broadcast over query length and heads
+h = t(h; rope=rope[1:seqlen], kpad_mask=kpad_mask)
 ```
 
-## Padding mask with cross_att_padding_mask (for cross-attention scenarios)
+### With cross-attention padding mask
 
-Use `kpad_mask` with `cross_att_padding_mask` when using TransformerBlock with different query and key sequences:
+Use `kpad_mask` when using TransformerBlock with different query and key sequences. Pass a key-level mask in **probability space** (values in `[0, 1]` where `1` indicates valid key position and `0` indicates padded):
 
 ```julia
 dim = 64
@@ -103,20 +114,18 @@ q = randn(Float32, dim, q_seqlen, batch)
 k = randn(Float32, dim, k_seqlen, batch)
 
 # Create padding mask for keys: sequence-level mask where 1 indicates valid position
-padmask = ones(Float32, k_seqlen, batch)
-padmask[12, 2] = 0  # Mark position 12 in batch 2 as padding
-
-# Convert to cross-attention mask: shape is (k_seqlen, q_seqlen, batch)
-kpad_mask = Onion.cross_att_padding_mask(padmask, q_seqlen)
+# Shape should be (k_seqlen, batch)
+kpad_mask = ones(Float32, k_seqlen, batch)
+kpad_mask[12, 2] = 0  # Mark position 12 in batch 2 as padding
 
 # Forward pass: pass key as positional argument after query
-# Note: The attention layer supports cross-attention when different keys are provided
+# Note: The mask is automatically converted to log-space and broadcast over query length and heads
 h = t(q, k; rope=rope[1:q_seqlen], krope=rope[1:k_seqlen], kpad_mask=kpad_mask)
 ```
 
-## Combining causal and padding masks
+### Combining causal and padding masks
 
-You can combine both causal and padding masks:
+You can combine both causal and padding masks. Padding masks should be in **probability space**:
 
 ```julia
 dim = 64
@@ -128,16 +137,16 @@ rope = RoPE(dim ÷ n_heads, 1000)
 t = TransformerBlock(dim, n_heads)
 h = randn(Float32, dim, seqlen, batch)
 
-# Create padding mask
-padmask = ones(Float32, seqlen, batch)
-padmask[10, 2] = 0
-kpad_mask = Onion.self_att_padding_mask(padmask)
+# Create padding mask: shape should be (seqlen, batch)
+kpad_mask = ones(Float32, seqlen, batch)
+kpad_mask[10, 2] = 0  # Mark position 10 in batch 2 as padding
 
 # Forward pass with both causal and padding masks
-h = t(h, 1, rope[1:seqlen]; causal=true, kpad_mask=kpad_mask)
+# Note: The padding mask is automatically converted to log-space and broadcast over query length and heads
+h = t(h; rope=rope[1:seqlen], causal=true, kpad_mask=kpad_mask)
 ```
 
-## Using with adaptive normalization (AdaLN)
+### With adaptive normalization (AdaLN)
 
 When using `AdaLN` (Adaptive Layer Normalization) instead of `RMSNorm`, you must pass a conditioning tensor via the `cond` parameter. 
 `AdaLN` takes the conditioning tensor and passes it through learned linear transformations (Dense layers) to compute scale and shift parameters. 
@@ -162,10 +171,10 @@ h = randn(Float32, dim, seqlen, batch)
 cond = randn(Float32, cond_dim, batch)
 
 # Forward pass with conditioning tensor
-h = t(h, 1, rope[1:seqlen]; cond=cond)
+h = t(h; rope=rope[1:seqlen], cond=cond)
 
 # You can still use masks with adaptive normalization
-h = t(h, 1, rope[1:seqlen]; cond=cond, causal=true)
+h = t(h; rope=rope[1:seqlen], cond=cond, causal=true)
 ```
 
 Alternatively, you can manually create a TransformerBlock with AdaLN:
@@ -184,7 +193,7 @@ t = TransformerBlock(
 
 # Usage is the same
 cond = randn(Float32, cond_dim, batch)
-h = t(h, 1, rope[1:seqlen]; cond=cond)
+h = t(h; rope=rope[1:seqlen], cond=cond)
 ```
 """
 @concrete struct TransformerBlock
@@ -214,6 +223,7 @@ function TransformerBlock(
     )
 end
 
+# Hidden from docs - forward pass documentation is in the constructor docstring above
 function (block::TransformerBlock)(
     x, xs...;
     cond=nothing, pair_feats=nothing,
