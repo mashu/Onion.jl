@@ -40,7 +40,19 @@ jobs:
         run: julia -e 'using Pkg; Pkg.Registry.add(Pkg.Registry.RegistrySpec(url="https://github.com/MurrellGroup/MurrellGroupRegistry"))'
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
+        env:
+          JULIA_NUM_THREADS: 2
       - uses: julia-actions/julia-processcoverage@v1
+      - name: Generate coverage summary
+        run: |
+          julia --project=test -e 'using Coverage; process_folder(); print_summary()' | tee coverage_summary.txt
+      - name: Upload coverage as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            lcov.info
+            coverage_summary.txt
       - uses: codecov/codecov-action@v5
         with:
           files: lcov.info
