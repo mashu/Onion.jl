@@ -14,6 +14,3 @@ export unchunk
 
 include("Modulator.jl")
 export Modulator
-
-include("StarGLU.jl")
-export StarGLU
