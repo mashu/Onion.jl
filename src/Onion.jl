@@ -33,7 +33,7 @@ include("ipa/ipa.jl")
 include("miscellaneous/miscellaneous.jl")
 include("norm/norm.jl")
 include("convolution/convolution.jl")
-include("embedding/embedding.jl")
+include("positional-encoding/positional-encoding.jl")
 include("transformers/transformers.jl")
 
 end

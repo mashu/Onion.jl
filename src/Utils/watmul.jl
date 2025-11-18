@@ -1,8 +1,8 @@
-function watmul(W::AbstractArray{T,3}, x::AbstractArray{T}) where T
-    x′ = rearrange(x,  einops"(s1 k) ... -> s1 k (...)"; k=size(W, 3))
+function watmul(W::DenseArray{T,3}, x::DenseArray{T}) where T
+    x′ = rearrange(x,  einops"(s1 k) ... -> s1 k ..."; k=size(W, 3))
     y′ = einsum(W, x′, einops"s2 s1 k, s1 k ... -> s2 k ...")
     y  = rearrange(y′, einops"s2 k ... -> (s2 k) ...")
-    return y
+    return y::typeof(x)
 end
 
 const ⨝ = watmul
