@@ -1,6 +1,6 @@
 name = "Onion"
 uuid = "fdebf6c2-71da-43a1-b539-c3bc3e09c5c6"
-version = "0.2.13"
+version = "0.2.14"
 authors = ["murrellb <murrellb@gmail.com> and contributors"]
 
 [deps]
