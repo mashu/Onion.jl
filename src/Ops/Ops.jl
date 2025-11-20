@@ -60,7 +60,6 @@ function naive_attention(
     kpad_mask::Maybe{AbstractArray} = nothing,
     causal::Bool = false,
 ) where T<:Number
-    q, k, v = rearrange.((q, k, v), einops"d l h ... -> d l h (...)")
     k, v = repeat.((k, v), einops"d l h ... -> d l (r h) ..."; r=size(q, 3) ÷ size(k, 3))
     d = size(q, 1)
     kT = rearrange(k, einops"d kl ... -> kl d ...")
@@ -69,20 +68,23 @@ function naive_attention(
     a = apply_pad_mask(a, kpad_mask)
     a = apply_causal_mask(a, causal)
     x = v ⊠ softmax(a)
-    return reshape(x, size(q))
+    return x
 end
 
 function flash_attention(
     q::AnyGPUArray, k::AnyGPUArray, v::AnyGPUArray;
     causal=false, pair=nothing, kws...
 )
+    shape = size(q)
     q, k, v = rearrange.((q, k, v), einops"d l h ... -> d l h (...)")
     x = NNop.flash_attention(q, k, v, pair; causal, kws...)
-    return reshape(x, size(q))
+    return reshape(x, shape)
 end
 
-sdpa(q, k, v; kws...) = naive_attention(q, k, v; kws...)
-sdpa(q::AnyGPUArray, k::AnyGPUArray, v::AnyGPUArray; kws...) =
+attention(q, k, v; kws...) = naive_attention(q, k, v; kws...)
+attention(q::AnyGPUArray, k::AnyGPUArray, v::AnyGPUArray; kws...) =
     flash_attention(q, k, v; kws...)
+
+const sdpa = attention
 
 end
