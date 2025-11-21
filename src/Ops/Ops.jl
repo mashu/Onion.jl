@@ -1,6 +1,6 @@
 module Ops
 
-using NNop: NNop
+using ONIONop: ONIONop
 using NNlib: NNlib
 
 using GPUArraysCore
@@ -12,7 +12,7 @@ using LinearAlgebra
 softmax(x::AbstractArray) = NNlib.softmax(x)
 
 function softmax(x::AnyGPUArray)
-    y = NNop.online_softmax(reshape(x, size(x, 1), :))
+    y = ONIONop.online_softmax(reshape(x, size(x, 1), :))
     return reshape(y, size(x))
 end
 
@@ -23,7 +23,7 @@ function rms_norm(x::AbstractArray, w::AbstractVector; eps, offset)
 end
 
 function rms_norm(x::AnyGPUArray, w::AnyGPUVector; eps, offset)
-    y = NNop.rms_norm(reshape(x, size(x, 1), :), w; ϵ=Float32(eps), offset=Float32(offset))
+    y = ONIONop.rms_norm(reshape(x, size(x, 1), :), w; ϵ=Float32(eps), offset=Float32(offset))
     return reshape(y, size(x))
 end
 
@@ -35,7 +35,7 @@ function layer_norm(x::AbstractArray, w::AbstractVector, b::AbstractVector; eps)
 end
 
 function layer_norm(x::AnyGPUArray, w::AnyGPUVector, b::AnyGPUVector; eps)
-    y = NNop.layer_norm(reshape(x, size(x, 1), :), w, b; ϵ=Float32(eps))
+    y = ONIONop.layer_norm(reshape(x, size(x, 1), :), w, b; ϵ=Float32(eps))
     return reshape(y, size(x))
 end
 
@@ -60,7 +60,10 @@ function naive_attention(
     kpad_mask::Maybe{AbstractArray} = nothing,
     causal::Bool = false,
 ) where T<:Number
-    k, v = repeat.((k, v), einops"d l h ... -> d l (r h) ..."; r=size(q, 3) ÷ size(k, 3))
+    num_q_per_kv = size(q, 3) ÷ size(k, 3)
+    if num_q_per_kv > 1
+        k, v = repeat.((k, v), einops"d l h ... -> d l (r h) ..."; r=num_q_per_kv)
+    end
     d = size(q, 1)
     kT = rearrange(k, einops"d kl ... -> kl d ...")
     a = kT ⊠ q ./ √T(d)
@@ -77,7 +80,7 @@ function flash_attention(
 )
     shape = size(q)
     q, k, v = rearrange.((q, k, v), einops"d l h ... -> d l h (...)")
-    x = NNop.flash_attention(q, k, v, pair; causal, kws...)
+    x = ONIONop.flash_attention(q, k, v, pair; causal, kws...)
     return reshape(x, shape)
 end
 
