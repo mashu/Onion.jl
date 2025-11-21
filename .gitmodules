@@ -1,0 +1,3 @@
+[submodule "lib/ONIONop"]
+	path = lib/ONIONop
+	url = https://github.com/MurrellGroup/ONIONop.jl.git
