@@ -14,3 +14,6 @@ export unchunk
 
 include("Modulator.jl")
 export Modulator
+
+include("Untrainable.jl")
+export Untrainable
