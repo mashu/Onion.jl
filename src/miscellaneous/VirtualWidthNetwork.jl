@@ -3,7 +3,7 @@ using ChainRulesCore
 using NNlib
 
 """
-    VirtualWidthNetwork(layer, n, m; T=Float32)
+    VirtualWidthNetwork(layer, n, m)
 
 Wrap a sublayer (e.g. attention or FFN) with the static form of
 **Generalized Hyper-Connections (GHC)**.
@@ -12,13 +12,10 @@ Given a backbone hidden size \$D\$, the over-width representation is
 partitioned into `n` segments, while the backbone operates on only `m`
 segments. This layer:
 
-- **compresses** an over-width state of size \$\\frac{n}{m}D\$
-down to backbone width \$D\$ by projecting down the n segments into m segments,
-
-- applies the wrapped `layer` at backbone width,
-
+- **compresses** an over-width state of size \$\\frac{n}{m}D\$ down
+to backbone width \$D\$ by projecting down the n segments into m segments,
+- applies the wrapped layer at backbone width,
 - **expands** the backbone output back to n segments,
-
 - **carries** forward the previous over-width state with a projection
 from n segments to n segments, adding it to the expanded backbone output.
 
@@ -29,11 +26,11 @@ See: [Virtual Width Networks](https://arxiv.org/abs/2511.11238)
     layer
 end
 
-function VirtualWidthNetwork(layer, n, m; T=Float32)
+function VirtualWidthNetwork(layer, n, m)
     r = n - m
-    down = T[I(m); zeros(r, m)]
-    side = T[I(n);]
-    up   = T[repeat(I(m), 1, fld(n, m));; I(r); zeros(r, m - r)]
+    down = Float32[I(m); zeros(r, m)]
+    side = Float32[I(n);]
+    up   = Float32[repeat(I(m), 1, fld(n, m));; I(r); zeros(r, m - r)]
     return VirtualWidthNetwork(down, side, up, layer)
 end
 
