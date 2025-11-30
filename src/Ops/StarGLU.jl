@@ -61,7 +61,7 @@ end
 function star_glu((; up, gate, down, act), x::AbstractArray; kws...)
     x′ = reshape(x, size(x, 1), :)
     y′ = _star_glu((; up, gate, down, act), x′; kws...).y
-    return reshape(y′, size(x))
+    return reshape(y′, size(down, 1), size(x)[2:end]...)
 end
 
 function ChainRulesCore.rrule(::typeof(star_glu),
@@ -164,5 +164,5 @@ function ChainRulesCore.rrule(::typeof(star_glu),
         ∇layer = (; up=∇up, gate=∇gate, down=∇down, act=NoTangent())
         return NoTangent(), ∇layer, reshape(∇x, size(x))
     end
-    return reshape(y_reshaped, size(x)), pullback
+    return reshape(y_reshaped, size(down, 1), size(x)[2:end]...), pullback
 end
