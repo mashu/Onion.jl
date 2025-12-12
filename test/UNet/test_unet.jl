@@ -257,8 +257,8 @@ using Flux
             model = UNet.FlexibleUNet(
                 in_channels=3,
                 out_channels=3,
-                depth=2,
-                base_channels=8
+                base_channels=8,
+                channel_multipliers=[1, 2]
             )
             x = randn(Float32, 8, 8, 3, 1)
             y = model(x)
@@ -269,8 +269,8 @@ using Flux
             model = UNet.FlexibleUNet(
                 in_channels=3,
                 out_channels=3,
-                depth=2,
                 base_channels=8,
+                channel_multipliers=[1, 2],
                 time_embedding=true,
                 time_emb_dim=16
             )
@@ -284,8 +284,8 @@ using Flux
             model = UNet.FlexibleUNet(
                 in_channels=3,
                 out_channels=3,
-                depth=2,
                 base_channels=8,
+                channel_multipliers=[1, 2],
                 time_embedding=true,
                 num_classes=5,
                 embedding_dim=8,
@@ -298,11 +298,10 @@ using Flux
             @test size(y) == (8, 8, 3, 1)
         end
         
-        @testset "Custom channel multipliers - exact match" begin
+        @testset "Custom channel multipliers" begin
             model = UNet.FlexibleUNet(
                 in_channels=3,
                 out_channels=1,
-                depth=3,
                 base_channels=8,
                 channel_multipliers=[1, 2, 4]
             )
@@ -311,38 +310,13 @@ using Flux
             @test size(y) == (16, 16, 1, 1)
         end
         
-        @testset "Custom channel multipliers - shorter than depth (extension)" begin
-            model = UNet.FlexibleUNet(
-                in_channels=3,
-                out_channels=3,
-                depth=3,
-                base_channels=8,
-                channel_multipliers=[1, 2]  # Should extend to [1, 2, 2]
-            )
-            x = randn(Float32, 16, 16, 3, 1)  # Larger input for depth=3
-            y = model(x)
-            @test size(y) == (16, 16, 3, 1)
-        end
-        
-        @testset "Custom channel multipliers - longer than depth (truncation)" begin
-            model = UNet.FlexibleUNet(
-                in_channels=3,
-                out_channels=3,
-                depth=2,
-                base_channels=8,
-                channel_multipliers=[1, 2, 4, 8]  # Should truncate to [1, 2]
-            )
-            x = randn(Float32, 8, 8, 3, 1)
-            y = model(x)
-            @test size(y) == (8, 8, 3, 1)
-        end
         
         @testset "With dropout" begin
             model = UNet.FlexibleUNet(
                 in_channels=3,
                 out_channels=3,
-                depth=2,
                 base_channels=8,
+                channel_multipliers=[1, 2],
                 dropout=0.1,
                 dropout_depth=2
             )
@@ -352,12 +326,12 @@ using Flux
         end
         
         @testset "Dropout depth limits" begin
-            # Test that dropout_depth is limited to 1 + depth
+            # Test that dropout_depth is limited to 1 + length(channel_multipliers)
             model = UNet.FlexibleUNet(
                 in_channels=3,
                 out_channels=3,
-                depth=2,
                 base_channels=8,
+                channel_multipliers=[1, 2],
                 dropout=0.1,
                 dropout_depth=10  # Should be capped at 3 (1 + 2)
             )
@@ -370,8 +344,8 @@ using Flux
             model = UNet.FlexibleUNet(
                 in_channels=3,
                 out_channels=3,
-                depth=2,
                 base_channels=8,
+                channel_multipliers=[1, 2],
                 activation=swish
             )
             x = randn(Float32, 8, 8, 3, 1)
@@ -383,8 +357,8 @@ using Flux
             model = UNet.FlexibleUNet(
                 in_channels=1,
                 out_channels=2,
-                depth=2,
-                base_channels=4
+                base_channels=4,
+                channel_multipliers=[1, 2]
             )
             x = randn(Float32, 8, 8, 1, 1)
             y = model(x)
@@ -395,8 +369,8 @@ using Flux
             model = UNet.FlexibleUNet(
                 in_channels=3,
                 out_channels=3,
-                depth=1,
-                base_channels=8
+                base_channels=8,
+                channel_multipliers=[1]
             )
             x = randn(Float32, 8, 8, 3, 1)
             y = model(x)
@@ -407,8 +381,8 @@ using Flux
             model = UNet.FlexibleUNet(
                 in_channels=3,
                 out_channels=3,
-                depth=2,
-                base_channels=8
+                base_channels=8,
+                channel_multipliers=[1, 2]
             )
             # Test with different input sizes
             x1 = randn(Float32, 8, 8, 3, 1)
@@ -424,8 +398,8 @@ using Flux
             model = UNet.FlexibleUNet(
                 in_channels=3,
                 out_channels=3,
-                depth=2,
                 base_channels=8,
+                channel_multipliers=[1, 2],
                 time_embedding=true,
                 num_classes=3,
                 time_emb_dim=16

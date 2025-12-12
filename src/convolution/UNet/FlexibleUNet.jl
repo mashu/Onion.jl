@@ -2,7 +2,6 @@
     FlexibleUNet(;
         in_channels=3,
         out_channels=3,
-        depth=3,
         base_channels=64,
         channel_multipliers=[1, 2, 4],
         time_embedding=false,
@@ -15,29 +14,28 @@
     )
 
 A flexible UNet architecture with configurable depth and channel dimensions.
+The depth is determined by the length of `channel_multipliers`.
 Supports optional time and class embeddings for diffusion models and conditional generation.
 
 # Arguments
 - `in_channels=3`: Number of input channels
 - `out_channels=3`: Number of output channels
-- `depth=3`: Number of encoder/decoder blocks
 - `base_channels=64`: Base channel dimension (multiplied at each level)
-- `channel_multipliers=[1, 2, 4]`: Multipliers for channel dimensions at each level
+- `channel_multipliers=[1, 2, 4]`: Multipliers for channel dimensions at each level. The length determines the depth (number of encoder/decoder blocks)
 - `time_embedding=false`: Whether to use time embeddings
 - `num_classes=0`: Number of class labels for conditional generation
 - `embedding_dim=128`: Dimension for class embeddings
 - `time_emb_dim=256`: Dimension for time embeddings
 - `dropout=0.0`: Dropout probability to apply to inner layers
-- `dropout_depth=0`: Number of layers to apply dropout to, starting from the innermost layers (0 means no dropout). Maximum value is 1+depth (bottleneck + all encoding/decoding levels)
+- `dropout_depth=0`: Number of layers to apply dropout to, starting from the innermost layers (0 means no dropout). Maximum value is 1+length(channel_multipliers) (bottleneck + all encoding/decoding levels)
 - `activation=relu`: Activation function to use throughout the network
 
 # Examples
 ```julia
-# Basic model without dropout
+# Basic model without dropout (depth=4 from channel_multipliers length)
 model = Onion.UNet.FlexibleUNet(
     in_channels=3,
     out_channels=3,
-    depth=4,
     base_channels=32,
     channel_multipliers=[1, 2, 4, 8],
     time_embedding=true
@@ -47,10 +45,10 @@ model = Onion.UNet.FlexibleUNet(
 model = Onion.UNet.FlexibleUNet(
     in_channels=3,
     out_channels=3,
-    depth=4,
     base_channels=32,
     channel_multipliers=[1, 2, 4, 8],
     time_embedding=true,
+    num_classes=10,
     dropout=0.2,
     dropout_depth=3
 )
@@ -78,7 +76,6 @@ end
 function FlexibleUNet(;
     in_channels=3,
     out_channels=3,
-    depth=3,
     base_channels=64,
     channel_multipliers=[1, 2, 4], # Multipliers for each level
     time_embedding=false,
@@ -89,15 +86,8 @@ function FlexibleUNet(;
     dropout_depth=0,
     activation=relu
 )
-    # Ensure we have enough channel multipliers for the requested depth
-    if length(channel_multipliers) < depth
-        # Extend with the last multiplier (create new array, don't mutate)
-        channel_multipliers = vcat(channel_multipliers,
-                fill(channel_multipliers[end], depth - length(channel_multipliers)))
-    elseif length(channel_multipliers) > depth
-        # Trim to the requested depth (create new array, don't mutate)
-        channel_multipliers = channel_multipliers[1:depth]
-    end
+    # Depth is determined by the length of channel_multipliers
+    depth = length(channel_multipliers)
 
     # Calculate actual channel numbers
     channels = [base_channels * m for m in channel_multipliers]
@@ -268,6 +258,7 @@ end
 function (model::FlexibleUNet)(x, t::T, labels::L) where {T <: AbstractArray, L <: AbstractArray}
     @assert ndims(x) >= 3 "Input must be at least 3D (height, width, channels) or 4D (height, width, channels, batch)"
     @assert size(x, 3) == model.in_channels "Input channels mismatch: expected $(model.in_channels), got $(size(x, 3))"
+    @assert model.num_classes > 0 "Model was constructed with num_classes=0, but labels were provided. Set num_classes > 0 when creating the model."
     
     t = model.time_embed(t, labels)
 
