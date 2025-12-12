@@ -67,6 +67,10 @@ struct FlexibleUNet{E,B,D,FC,T}
     decoders::D
     final_conv::FC
     time_embed::T
+    in_channels::Int
+    out_channels::Int
+    time_embedding::Bool
+    num_classes::Int
 end
 
 @layer FlexibleUNet
@@ -160,7 +164,8 @@ function FlexibleUNet(;
     encoders_tuple = Tuple(encoders)
     decoders_tuple = Tuple(decoders)
 
-    FlexibleUNet(encoders_tuple, bottleneck, decoders_tuple, final_conv, time_embed)
+    FlexibleUNet(encoders_tuple, bottleneck, decoders_tuple, final_conv, time_embed, 
+                 in_channels, out_channels, time_embedding, num_classes)
 end
 
 # Process encoders and collect skip connections without mutations
@@ -221,6 +226,9 @@ end
 
 # Standard forward pass without time embedding - using foldl to avoid mutations
 function (model::FlexibleUNet)(x)
+    @assert ndims(x) >= 3 "Input must be at least 3D (height, width, channels) or 4D (height, width, channels, batch)"
+    @assert size(x, 3) == model.in_channels "Input channels mismatch: expected $(model.in_channels), got $(size(x, 3))"
+    
     # Apply encoder blocks and collect skip connections
     x, skip_connections = process_encoders(x, model.encoders)
 
@@ -237,6 +245,9 @@ end
 
 # Forward pass with time embedding - using foldl to avoid mutations
 function (model::FlexibleUNet)(x, t::T) where T <: AbstractArray
+    @assert ndims(x) >= 3 "Input must be at least 3D (height, width, channels) or 4D (height, width, channels, batch)"
+    @assert size(x, 3) == model.in_channels "Input channels mismatch: expected $(model.in_channels), got $(size(x, 3))"
+    
     t = model.time_embed(t)
 
     # Apply encoder blocks and collect skip connections
@@ -255,6 +266,9 @@ end
 
 # Forward pass with time embedding and class labels - using foldl to avoid mutations
 function (model::FlexibleUNet)(x, t::T, labels::L) where {T <: AbstractArray, L <: AbstractArray}
+    @assert ndims(x) >= 3 "Input must be at least 3D (height, width, channels) or 4D (height, width, channels, batch)"
+    @assert size(x, 3) == model.in_channels "Input channels mismatch: expected $(model.in_channels), got $(size(x, 3))"
+    
     t = model.time_embed(t, labels)
 
     # Apply encoder blocks and collect skip connections
