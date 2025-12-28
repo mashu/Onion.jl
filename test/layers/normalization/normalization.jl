@@ -1,5 +1,19 @@
 @testset "norm.jl" begin
 
+    @testset "Derf" begin
+        derf = Derf(256)
+        x = randn(Float32, 256, 5)
+        y = derf(x)
+        @test size(y) == size(x)
+    end
+
+    @testset "DyT" begin
+        dyt = DyT(256)
+        x = randn(Float32, 256, 2)
+        y = dyt(x)
+        @test size(y) == size(x)
+    end
+
     @testset "LpNorm" begin
         v = randn(Float32, 40, 50)
         atol = 1f-2
