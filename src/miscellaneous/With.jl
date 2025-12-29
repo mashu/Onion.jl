@@ -3,6 +3,8 @@
 
 Wrap `layer` with `wrapper`, calling `wrapper(layer, args...; kws...)`.
 
+Equivalent to `Base.Fix1(wrapper, layer)`.
+
 # Examples
 
 ```jldoctest
