@@ -1,5 +1,7 @@
 module Onion
 
+using Base.Broadcast: materialize
+
 using ChainRulesCore
 using ConcreteStructs
 using Einops
@@ -7,6 +9,7 @@ using Flux
 using LinearAlgebra
 using NNlib
 using Rewrap
+using Statistics: mean
 
 const Maybe{T} = Union{T,Nothing}
 

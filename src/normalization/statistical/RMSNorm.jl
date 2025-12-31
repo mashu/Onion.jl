@@ -16,3 +16,14 @@ function RMSNorm(dim::Int; T=Float32, eps=1f-5, zero_centered=false)
 end
 
 (norm::RMSNorm)(x) = Ops.rms_norm(x, norm.weight; norm.eps, norm.offset)
+
+function fuse((; weight, offset, eps)::RMSNorm, x)
+    @lazy (weight + offset) * x / √($mean(abs2, x; dims=1) + eps)
+end
+
+function Base.show(io::IO, norm::RMSNorm)
+    print(io, "RMSNorm(", length(norm.weight),
+        ", eps=", repr(norm.eps))
+    norm.offset != 0 && print(io, ", zero_centered=", true)
+    print(io, ")")
+end

@@ -23,7 +23,7 @@ function DyT(
     )
 end
 
-lazy_apply((; α, weight, bias)::DyT, x) = @lazy weight * tanh(α * x) + bias
-LayerStyle(::Type{<:DyT}) = LazyStyle()
+LayerStyle(::Type{<:DyT}) = FusedStyle()
+fuse((; α, weight, bias)::DyT, x) = @lazy weight * tanh(α * x) + bias
 
 Base.show(io::IO, (; weight)::DyT) = print(io, "DyT($(length(weight)))")

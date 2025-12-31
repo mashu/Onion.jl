@@ -24,8 +24,9 @@ function Derf(
     )
 end
 
-lazy_apply((; α, s, γ, β)::Derf, x) = @lazy γ * erf(α * x + s) + β
-LayerStyle(::Type{<:Derf}) = LazyStyle()
+LayerStyle(::Type{<:Derf}) = FusedStyle()
+
+fuse((; α, s, γ, β)::Derf, x) = @lazy γ * erf(α * x + s) + β
 
 @views function Base.getindex((; α, s, γ, β)::Derf, i::AbstractVector)
     Derf(α, s, γ[i], β[i])
