@@ -28,8 +28,10 @@ function AdaAffine(
     return AdaAffine(f, scale_proj, shift_proj)
 end
 
-function ((; f, scale_proj, shift_proj)::AdaAffine)(x, cond)
+LayerStyle(::Type{<:AdaAffine}) = FusedStyle()
+
+function fuse((; f, scale_proj, shift_proj)::AdaAffine, x, cond)
     γ = scale_proj(cond)
     β = shift_proj(cond)
-    return @. (1 + γ) * $fuse(f, x) + β
+    return @lazy (1 + γ) * $fuse(f, x) + β
 end

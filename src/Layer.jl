@@ -14,19 +14,18 @@ struct FusedStyle <: LayerStyle end
 function fuse end
 
 LayerStyle(::Type{<:Layer}) = EagerStyle()
+LayerStyle(::T) where T<:Layer = LayerStyle(T)
 
 # always get an array; use `fuse` method if layer uses FusedStyle
 # AND does not define a normal call method 
 function (layer::Layer)(args...; kws...)
-    LayerStyle(typeof(layer)) isa EagerStyle &&
-        error("Expected eager layer $(typeof(layer)) to define its own method")
+    LayerStyle(layer) isa EagerStyle && throw(MethodError(layer, args))
     return materialize(fuse(layer, args...; kws...))
 end
 
 # get a lazy object if fuse is defined, otherwise array
 function fuse(layer::Layer, args...; kws...)
-    LayerStyle(typeof(layer)) isa FusedStyle &&
-        error("Expected lazy layer $(typeof(layer)) to define its own method")
+    LayerStyle(layer) isa FusedStyle && throw(MethodError(fuse, (layer, args...)))
     return layer(args...; kws...)
 end
 

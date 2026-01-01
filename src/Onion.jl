@@ -25,7 +25,7 @@ export cross_att_padding_mask
 export causal_mask
 export bf16
 
-include("layer.jl")
+include("Layer.jl")
 export @concrete
 export @layer
 
