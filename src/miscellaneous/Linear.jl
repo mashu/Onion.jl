@@ -27,8 +27,8 @@ end
 function ((; weight, bias, σ)::Linear)(x)
     x′ = reshape(x, Keep(), :)
     y′ = weight * x′
-    y = reshape(y′, Keep(), size(x)[2:end]...)
-    NNlib.bias_act!(σ, y, bias)
+    y = reshape(y′, Keep(), Split(.., size(x)[2:end]))
+    NNlib.bias_act!(σ, y, @something bias false)
     return y
 end
 
