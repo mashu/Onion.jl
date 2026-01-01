@@ -3,31 +3,23 @@ using Flux: @layer
 abstract type Layer end
 @layer Layer
 
-function input_size end
-function output_size end
-
 
 abstract type LayerStyle end
-struct EagerStyle <: LayerStyle end
-struct FusedStyle <: LayerStyle end
 
-function fuse end
-
-LayerStyle(::Type{<:Layer}) = EagerStyle()
 LayerStyle(::T) where T<:Layer = LayerStyle(T)
 
-# always get an array; use `fuse` method if layer uses FusedStyle
-# AND does not define a normal call method 
-function (layer::Layer)(args...; kws...)
-    LayerStyle(layer) isa EagerStyle && throw(MethodError(layer, args))
-    return materialize(fuse(layer, args...; kws...))
-end
+apply_with(::S, ::S, ::L, args...; kws...) where {S<:LayerStyle,L<:Layer} = error("$(L.name.name) does not implement $(S)")
+apply(style::LayerStyle, layer::Layer, args...; kws...) = apply_with(style, LayerStyle(layer), layer, args...; kws...)
 
-# get a lazy object if fuse is defined, otherwise array
-function fuse(layer::Layer, args...; kws...)
-    LayerStyle(layer) isa FusedStyle && throw(MethodError(fuse, (layer, args...)))
-    return layer(args...; kws...)
-end
+struct EagerStyle <: LayerStyle end
+(layer::Layer)(args...; kws...) = apply(EagerStyle(), layer, args...; kws...)
+LayerStyle(::Type{<:Layer}) = EagerStyle()
+
+struct FusedStyle <: LayerStyle end
+fuse(layer::Layer, args...; kws...) = apply(FusedStyle(), layer, args...; kws...)
+
+apply_with(::EagerStyle, ::FusedStyle, layer::Layer, args...; kws...) = materialize(fuse(layer, args...; kws...))
+apply_with(::FusedStyle, ::EagerStyle, layer::Layer, args...; kws...) = layer(args...; kws...)
 
 
 const UNICODE_PROPERTY_MAP = (
