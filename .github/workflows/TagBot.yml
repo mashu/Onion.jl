@@ -35,3 +35,12 @@ jobs:
           ssh: ${{ secrets.DOCUMENTER_KEY }}
           registry: MurrellGroup/MurrellGroupRegistry
           subdir: "lib/${{ matrix.package }}"
+          changelog: |
+            ## {{ package }} {{ version }}
+            {% if yanked %}
+            :warning: **This release has been yanked from the registry.**
+            {% endif %}
+            {% if custom %}
+            {{ custom }}
+            {% endif %}
+          changelog_format: custom
