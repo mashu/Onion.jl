@@ -1,0 +1,31 @@
+name: CI (OnionStyle)
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/CommonCI.yml"
+      - ".github/workflows/CI_OnionStyle.yml"
+      - "lib/OnionStyle/**"
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+jobs:
+  test:
+    uses: ./.github/workflows/CommonCI.yml
+    with:
+      julia_version: "1.12"
+      project: "lib/OnionStyle"
+
+  downgrade:
+    uses: ./.github/workflows/CommonCI.yml
+    with:
+      julia_version: "1.11"
+      project: "lib/OnionStyle"
+      downgrade_testing: true

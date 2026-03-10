@@ -1,0 +1,31 @@
+name: CI (OnionCore)
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/CommonCI.yml"
+      - ".github/workflows/CI_OnionCore.yml"
+      - "lib/OnionCore/**"
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+jobs:
+  test:
+    uses: ./.github/workflows/CommonCI.yml
+    with:
+      julia_version: "1.12"
+      project: "lib/OnionCore"
+
+  downgrade:
+    uses: ./.github/workflows/CommonCI.yml
+    with:
+      julia_version: "1.11"
+      project: "lib/OnionCore"
+      downgrade_testing: true
