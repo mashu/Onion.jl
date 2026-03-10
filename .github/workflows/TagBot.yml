@@ -16,6 +16,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           ssh: ${{ secrets.DOCUMENTER_KEY }}
+          registry: MurrellGroup/MurrellGroupRegistry
 
   TagBot-Subpackages:
     if: github.event_name == 'workflow_dispatch' || github.actor == 'JuliaTagBot' || github.actor == 'AntonOresten'
@@ -32,4 +33,5 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           ssh: ${{ secrets.DOCUMENTER_KEY }}
+          registry: MurrellGroup/MurrellGroupRegistry
           subdir: "lib/${{ matrix.package }}"
