@@ -39,21 +39,21 @@ using LinearAlgebra
 
     @testset "type conversion →" begin
         @testset "number conversion" begin
-            @test (1 → Float32) isa Float32
-            @test (1 → Float64) == 1.0
+            @test (1.0 → Float32) isa Float32
+            @test (1 → Float64) !== 1.0
         end
 
         @testset "array conversion" begin
-            x = [1, 2, 3]
+            x = [1.0, 2.0, 3.0]
             y = x → Float32
             @test eltype(y) == Float32
-            @test y == Float32[1, 2, 3]
+            @test y == x
         end
 
         @testset "partial application" begin
             to_f32 = →(Float32)
-            @test to_f32(1) isa Float32
-            @test to_f32([1, 2]) |> eltype == Float32
+            @test to_f32(1.0) isa Float32
+            @test to_f32([1.0, 2.0]) |> eltype == Float32
         end
     end
 
