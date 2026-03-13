@@ -33,7 +33,8 @@ backend(rules::Rules, p::Primitive) = resolve_backend(backend(rules), p)
 backend!(b::Backend) = (GLOBAL_BACKEND[] = b; nothing)
 withbackend(f::Function, b::Backend) = with(f, CURRENT_BACKEND => b)
 
-macro primitive(prim, ::Symbol, wrapper)
+macro primitive(prim, as::Symbol, wrapper)
+    @assert as === :as
     T = Symbol('#', prim)
     esc(quote
         # primitive: singleton struct for backend dispatch
