@@ -1,3 +1,16 @@
+# Primitives are backend-dispatched kernel contracts: callable singletons (<: Function)
+# that backends extend with concrete implementations.
+#   _linear(::DefaultBackend, x, W, b) = ...   # backend implements primitive
+#   _linear(::NNopBackend, x, W, b) = ...       # another backend
+#
+# Interface functions are the user-facing API. They handle kwargs, reshaping,
+# and argument normalization, then delegate to the primitive.
+#   linear(x, W, b) → linear(backend, x, W, b) → _linear(backend, x, W, b)
+#
+# @primitive _kernel as interface  declares both. The interface gets a default
+# pass-through to the primitive; override it to add custom logic.
+# Backends only need to implement the primitive, never the interface.
+
 abstract type Primitive <: Function end
 
 using Base.ScopedValues: ScopedValue, with
@@ -20,24 +33,23 @@ backend(rules::Rules, p::Primitive) = resolve_backend(backend(rules), p)
 backend!(b::Backend) = (GLOBAL_BACKEND[] = b; nothing)
 withbackend(f::Function, b::Backend) = with(f, CURRENT_BACKEND => b)
 
-(p::Primitive)(b::Backend, args...; kws...) =
-    throw(MethodError(p, (b, args...)))
-
-(p::Primitive)(b::Backend, (@nospecialize r::Rules), args...; kws...) =
-    p(b, args...; kws...)
-
-(p::Primitive)(r::Rules, args...; kws...) =
-    p(backend(r, p), r, args...; kws...)
-
-(p::Primitive)(args...; kws...) =
-    p(Rules(), args...; kws...)
-
-macro primitive(name::Symbol)
-    T = Symbol(:primitive_, name)
+macro primitive(prim, ::Symbol, wrapper)
+    T = Symbol('#', prim)
     esc(quote
+        # primitive: singleton struct for backend dispatch
         struct $T <: $Primitive end
-        Base.@__doc__ const $name = $T()
-        $(Expr(:public, name))
+        $T.name.singletonname = $(QuoteNode(prim))
+        const $prim = $T()
+        $(Expr(:public, prim))
+        # interface: user-facing function with backend resolution
+        Base.@__doc__ function $wrapper end
+        $wrapper(b::$Backend, args...; kws...) =
+            $prim(b, args...; kws...)
+        $wrapper(r::$Rules, args...; kws...) =
+            $wrapper($backend(r, $prim), args...; kws...)
+        $wrapper(args...; kws...) =
+            $wrapper($Rules(), args...; kws...)
+        $(Expr(:public, wrapper))
     end)
 end
 
@@ -47,26 +59,26 @@ end
 Matrix multiply with optional bias: `W * x .+ b`.
 `b` can be an `AbstractVector` or `false` (no bias).
 """
-@primitive linear
+@primitive _linear as linear
 include("linear.jl")
 
 """
     rms_norm(x::AbstractMatrix, w::AbstractVector; eps, offset)
     rms_norm(x::AbstractMatrix; eps)
 """
-@primitive rms_norm
+@primitive _rms_norm as rms_norm
 include("norm/rms_norm.jl")
 
 """
     layer_norm(x::AbstractMatrix, w::AbstractVector, b::AbstractVector; eps)
 """
-@primitive layer_norm
+@primitive _layer_norm as layer_norm
 include("norm/layer_norm.jl")
 
 """
-    softmax(x::AbstractMatrix)
+    softmax(x::AbstractMatrix; dims=1)
 """
-@primitive softmax
+@primitive _softmax as softmax
 include("softmax.jl")
 
 """
@@ -75,13 +87,13 @@ include("softmax.jl")
         causal, pair,
         q_lengths, k_lengths)
 """
-@primitive attention
+@primitive _attention as attention
 include("attention/attention.jl")
 
-@primitive glu_ffn
+@primitive _glu_ffn as glu_ffn
 include("feedforward/glu.jl")
 
-@primitive multihead_ffn
+@primitive _multihead_ffn as multihead_ffn
 include("feedforward/multihead.jl")
 
 """
@@ -90,7 +102,7 @@ include("feedforward/multihead.jl")
 Apply rotary positional embeddings. Splits `x` along dim 1 into halves and
 applies the rotation: `[x₁·cos - x₂·sin; x₂·cos + x₁·sin]`.
 """
-@primitive rotary_pos_emb
+@primitive _rotary_pos_emb as rotary_pos_emb
 include("positional/rotary.jl")
 
 """
@@ -99,7 +111,7 @@ include("positional/rotary.jl")
 Triangle multiplication contraction. `a` and `b` are (C, L, L, B) tensors.
 When `outgoing`, contracts as `a @ bᵀ` per channel×batch; otherwise `aᵀ @ b`.
 """
-@primitive combine_projections
+@primitive _combine_projections as combine_projections
 include("contraction/combine_projections.jl")
 
 """
@@ -109,5 +121,5 @@ Quintic Newton-Schulz iteration for polar decomposition.
 `coefficients` is an iterable of `(a, b, c)` tuples — one per iteration.
 Each step applies `Y = aX + bXXᵀX + cXXᵀXXᵀX` (tall) or the wide variant.
 """
-@primitive newton_schulz
+@primitive _newton_schulz as newton_schulz
 include("newton_schulz.jl")

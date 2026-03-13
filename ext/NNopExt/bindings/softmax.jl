@@ -1,7 +1,7 @@
 using Rewrap: Keep, Split, (..)
 
-function Onion.softmax(::NNopBackend,
-    x::AbstractMatrix
+function Onion._softmax(::NNopBackend,
+    x::AbstractMatrix, ::Val{1}
 )
     y = NNop.online_softmax(x)
     return y
