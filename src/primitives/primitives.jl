@@ -39,15 +39,16 @@ macro primitive(prim, as::Symbol, wrapper)
     esc(quote
         # primitive: singleton struct for backend dispatch
         struct $T <: $Primitive end
-        $T.name.singletonname = $(QuoteNode(prim))
         const $prim = $T()
         $(Expr(:public, prim))
         # interface: user-facing function with backend resolution
         Base.@__doc__ function $wrapper end
         $wrapper(b::$Backend, args...; kws...) =
             $prim(b, args...; kws...)
+        $wrapper(b::$Backend, r::$Rules, args...; kws...) =
+            $wrapper(b, args...; kws...)
         $wrapper(r::$Rules, args...; kws...) =
-            $wrapper($backend(r, $prim), args...; kws...)
+            $wrapper($backend(r, $prim), r, args...; kws...)
         $wrapper(args...; kws...) =
             $wrapper($Rules(), args...; kws...)
         $(Expr(:public, wrapper))
