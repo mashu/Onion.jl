@@ -1,5 +1,3 @@
-using Rewrap: Keep, Split, (..)
-
 function Onion._layer_norm(::NNopBackend,
     x::AbstractMatrix, w::AbstractVector, b::AbstractVector, ::Val{1};
     eps

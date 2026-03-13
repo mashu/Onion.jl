@@ -20,7 +20,7 @@ function layer_norm(backend::Backend,
     if dims isa Val{1}
         x′ = reshape(x, Keep(), :)
         y′ = _layer_norm(backend, x′, w, b, dims; eps)
-        return reshape(y′, Keep(), size(x)[2:end]...)
+        return reshape(y′, Keep(), Split(.., size(x)[2:end]))
     end
     return _layer_norm(backend, x, w, b, dims; eps)
 end

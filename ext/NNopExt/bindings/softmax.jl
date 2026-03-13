@@ -1,5 +1,3 @@
-using Rewrap: Keep, Split, (..)
-
 function Onion._softmax(::NNopBackend,
     x::AbstractMatrix, ::Val{1}
 )

@@ -1,5 +1,3 @@
-using Rewrap: Keep, Split, (..)
-
 function Onion._rms_norm(::NNopBackend,
     x::AbstractMatrix, w::AbstractVector, ::Val{1};
     eps, offset = 0f0
