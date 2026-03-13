@@ -15,11 +15,11 @@ abstract type Primitive <: Function end
 
 using Base.ScopedValues: ScopedValue, with
 
-const CURRENT_BACKEND = ScopedValue{Union{Backend, Nothing}}(nothing)
+const SCOPED_BACKEND = ScopedValue{Union{Backend, Nothing}}(nothing)
 const GLOBAL_BACKEND = Ref{Union{Backend, Nothing}}(nothing)
 
 backend() = @something(
-    CURRENT_BACKEND[],
+    SCOPED_BACKEND[],
     GLOBAL_BACKEND[],
     error("no backend set")
 )
@@ -31,7 +31,7 @@ backend(rules::Rules) = get(rules, :backend, backend())
 backend(rules::Rules, p::Primitive) = resolve_backend(backend(rules), p)
 
 backend!(b::Backend) = (GLOBAL_BACKEND[] = b; nothing)
-withbackend(f::Function, b::Backend) = with(f, CURRENT_BACKEND => b)
+withbackend(f::Function, b::Backend) = with(f, SCOPED_BACKEND => b)
 
 macro primitive(prim, as::Symbol, wrapper)
     @assert as === :as
