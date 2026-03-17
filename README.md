@@ -9,6 +9,6 @@
 
 ```julia
 using Pkg
-Registry.add(url="https://github.com/MurrellGroup/MurrellGroupRegistry")
+Pkg.Registry.add(url="https://github.com/MurrellGroup/MurrellGroupRegistry")
 Pkg.add("Onion")
 ```
