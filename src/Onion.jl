@@ -3,7 +3,7 @@ module Onion
 using Republic
 
 # bring in all public names, and reexport all exported names
-@republic reexport=true using OnionCore
+@reexport inherit=:public import OnionCore
 
 using OnionStyle
 
