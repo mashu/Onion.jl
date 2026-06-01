@@ -23,8 +23,7 @@ rope  = RoPE(dim ÷ n_heads, 1000)
 
 h = randn(Float32, dim, seqlen, 1)
 
-h = block(h, 1, rope[1:seqlen])                  # without a mask
-h = block(h, 1, rope[1:seqlen], Onion.causal_mask(h))  # with a causal mask
+h = block(h, 1, rope[1:seqlen])
 ```
 
 ## Overview
